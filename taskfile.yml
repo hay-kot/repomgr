@@ -1,7 +1,8 @@
 version: "3"
 
 env:
-  LOG_LEVEL: "debug"
+  REPOMGR_LOG_LEVEL: "debug"
+  REPOMGR_LOG_FILE: "repomgr.dev.log"
 
 tasks:
   run:
@@ -9,6 +10,11 @@ tasks:
     cmds:
       - go run *.go {{ .CLI_ARGS }}
     silent: false
+
+  logs:tail:
+    desc: tails the log file for the application
+    cmds:
+      - tail -f ${REPOMGR_LOG_FILE} 
 
   build:
     desc: Builds the backend binary

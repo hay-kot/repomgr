@@ -2,17 +2,15 @@ package main
 
 import (
 	"fmt"
-	"net/url"
+	"io"
 	"os"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
-	"github.com/hay-kot/repomgr/app/debugger"
 )
 
 var (
@@ -35,8 +33,6 @@ func main() {
 	ctrl := &commands.Controller{
 		Flags: &commands.Flags{},
 	}
-	streamer := debugger.NewStreamer()
-
 	app := &cli.App{
 		Name:    "Repo Manager",
 		Usage:   "Repository Management TUI/CLI for working with Github Projects",
@@ -47,10 +43,30 @@ func main() {
 				Usage:       "log level (debug, info, warn, error, fatal, panic)",
 				Value:       "debug",
 				Destination: &ctrl.Flags.LogLevel,
+				EnvVars:     []string{"REPOMGR_LOG_LEVEL"},
+			},
+			&cli.PathFlag{
+				Name:    "log-file",
+				Usage:   "log file",
+				Value:   "repomgr.log",
+				EnvVars: []string{"REPOMGR_LOG_FILE"},
 			},
 		},
 		Before: func(ctx *cli.Context) error {
-			log.Logger = log.Output(zerolog.ConsoleWriter{Out: streamer})
+			var writer io.Writer
+
+			logFile := ctx.Path("log-file")
+			if logFile == "" {
+				writer = io.Discard
+			} else {
+				f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					return err
+				}
+				writer = f
+			}
+
+			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
 
 			level, err := zerolog.ParseLevel(ctrl.Flags.LogLevel)
 			if err != nil {
@@ -61,13 +77,6 @@ func main() {
 			return nil
 		},
 		Action: func(ctx *cli.Context) error {
-			go func() {
-				err := streamer.Start("8080")
-				if err != nil {
-					panic(err)
-				}
-			}()
-
 			count := 0
 			for {
 				log.Info().
@@ -76,30 +85,6 @@ func main() {
 				time.Sleep(200 * time.Millisecond)
 				count++
 			}
-		},
-		Commands: []*cli.Command{
-			{
-				Name:  "attach",
-				Usage: "Attach to log endpoint for debugging",
-				Action: func(ctx *cli.Context) error {
-					u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/logs"}
-
-					c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-					if err != nil {
-						return err
-					}
-
-					defer c.Close()
-
-					for {
-						_, msg, err := c.ReadMessage()
-						if err != nil {
-							return err
-						}
-						fmt.Print(string(msg))
-					}
-				},
-			},
 		},
 	}
 
