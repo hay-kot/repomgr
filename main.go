@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"time"
@@ -44,12 +43,6 @@ func main() {
 		Version: build(),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "cwd",
-				Usage:       "current working directory",
-				Value:       ".",
-				Destination: &ctrl.Flags.WorkingDirectory,
-			},
-			&cli.StringFlag{
 				Name:        "log-level",
 				Usage:       "log level (debug, info, warn, error, fatal, panic)",
 				Value:       "debug",
@@ -57,8 +50,7 @@ func main() {
 			},
 		},
 		Before: func(ctx *cli.Context) error {
-			writer := io.MultiWriter(streamer)
-			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
+			log.Logger = log.Output(zerolog.ConsoleWriter{Out: streamer})
 
 			level, err := zerolog.ParseLevel(ctrl.Flags.LogLevel)
 			if err != nil {
@@ -66,31 +58,26 @@ func main() {
 			}
 
 			zerolog.SetGlobalLevel(level)
-
 			return nil
 		},
-		Commands: []*cli.Command{
-			{
-				Name:  "hello",
-				Usage: "Says hello world",
-				Action: func(ctx *cli.Context) error {
-					go func() {
-						err := streamer.Start("8080")
-						if err != nil {
-              panic(err)  
-						}
-					}()
+		Action: func(ctx *cli.Context) error {
+			go func() {
+				err := streamer.Start("8080")
+				if err != nil {
+					panic(err)
+				}
+			}()
 
-					count := 0
-					for {
-						log.Info().
-							Int("count", count).
-							Msg("Hello World")
-						time.Sleep(200 * time.Millisecond)
-						count++
-					}
-				},
-			},
+			count := 0
+			for {
+				log.Info().
+					Int("count", count).
+					Msg("Hello World")
+				time.Sleep(200 * time.Millisecond)
+				count++
+			}
+		},
+		Commands: []*cli.Command{
 			{
 				Name:  "attach",
 				Usage: "Attach to log endpoint for debugging",
