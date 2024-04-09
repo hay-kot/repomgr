@@ -9,13 +9,13 @@ import (
 )
 
 type Controller struct {
-	Flags *Flags
-	cc    clientCache
+	conf *config.Config
+	cc   clientCache
 }
 
-func NewController() *Controller {
+func NewController(conf *config.Config) *Controller {
 	return &Controller{
-		Flags: &Flags{},
+		conf: conf,
 		cc: clientCache{
 			cache: make(map[cacheKey]repos.RepositoryClient),
 		},

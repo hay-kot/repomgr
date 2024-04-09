@@ -32,10 +32,6 @@ func build() string {
 }
 
 func main() {
-	ctrl := &commands.Controller{
-		Flags: &commands.Flags{},
-	}
-
 	appctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -47,16 +43,15 @@ func main() {
 		Version: build(),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "log-level",
-				Usage:       "log level (debug, info, warn, error, fatal, panic)",
-				Value:       "debug",
-				Destination: &ctrl.Flags.LogLevel,
-				EnvVars:     []string{"REPOMGR_LOG_LEVEL"},
+				Name:    "log-level",
+				Usage:   "log level (debug, info, warn, error, fatal, panic)",
+				Value:   "debug",
+				EnvVars: []string{"REPOMGR_LOG_LEVEL"},
 			},
 			&cli.PathFlag{
 				Name:    "log-file",
 				Usage:   "log file",
-				Value:   "repomgr.log",
+				Value:   "",
 				EnvVars: []string{"REPOMGR_LOG_FILE"},
 			},
 			&cli.PathFlag{
@@ -99,7 +94,7 @@ func main() {
 			// for nice tail output
 			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
 
-			level, err := zerolog.ParseLevel(ctrl.Flags.LogLevel)
+			level, err := zerolog.ParseLevel(ctx.String("log-level"))
 			if err != nil {
 				return err
 			}
@@ -112,7 +107,8 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					return ctrl.Cache(appctx, cfg)
+					ctrl := commands.NewController(cfg)
+					return ctrl.Cache(appctx)
 				},
 			},
 			{

@@ -34,7 +34,7 @@ func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 // GetAllByUsername implements RepositoryClient.
 func (g *GithubClient) GetAllByUsername(ctx context.Context, username string) ([]Repository, error) {
 	opt := &github.RepositoryListByUserOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: 10},
 	}
 	// get all pages of results
 	var allRepos []*github.Repository

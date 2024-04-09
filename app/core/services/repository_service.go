@@ -90,7 +90,7 @@ func (s *RepositoryService) GetReadme(ctx context.Context, repoID int) ([]byte, 
 		return nil, err
 	}
 
-	if len(v) == 0 {
+	if len(v) == 0 || len(v[0].Data) == 0 {
 		return nil, ErrNoReadmeFound
 	}
 
