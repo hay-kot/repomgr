@@ -5,17 +5,20 @@ import (
 	"sync"
 
 	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/services"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
 type Controller struct {
-	conf *config.Config
-	cc   clientCache
+	conf  *config.Config
+	repos *services.RepositoryService
+	cc    clientCache
 }
 
-func NewController(conf *config.Config) *Controller {
+func NewController(conf *config.Config, rs *services.RepositoryService) *Controller {
 	return &Controller{
-		conf: conf,
+		conf:  conf,
+		repos: rs,
 		cc: clientCache{
 			cache: make(map[cacheKey]repos.RepositoryClient),
 		},

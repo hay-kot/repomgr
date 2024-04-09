@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/hay-kot/repomgr/app/commands"
 	"github.com/hay-kot/repomgr/app/commands/ui"
+	"github.com/hay-kot/repomgr/app/console"
 	"github.com/hay-kot/repomgr/app/core/config"
 )
 
@@ -38,6 +40,8 @@ func main() {
 	defer cancel()
 
 	cfg := &config.Config{}
+
+	console := console.NewConsole(os.Stdout, true)
 
 	app := &cli.App{
 		Name:    "Repo Manager",
@@ -109,7 +113,7 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					ctrl := commands.NewController(cfg)
+					ctrl := commands.NewController(cfg, nil)
 					return ctrl.Cache(appctx)
 				},
 			},
@@ -145,12 +149,29 @@ func main() {
 							})
 						},
 					},
+					{
+						Name:  "error",
+						Usage: "test/dump console outputs",
+						Action: func(ctx *cli.Context) error {
+							return errors.New("failed to run config file")
+						},
+					},
+					{
+						Name:  "console",
+						Usage: "test/dump console outputs",
+						Action: func(ctx *cli.Context) error {
+							console.UnknownError("An unexpected error occurred", fmt.Errorf("this is an error"))
+							return nil
+						},
+					},
 				},
 			},
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal().Err(err).Msg("failed to run Repo Manager")
+		log.Err(err).Msg("app.Run")
+		console.UnknownError("An unexpected error occurred", err)
+		os.Exit(1)
 	}
 }

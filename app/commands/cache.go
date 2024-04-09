@@ -14,6 +14,7 @@ import (
 func (ctrl *Controller) Cache(ctx context.Context) error {
 	return ui.NewSpinnerFunc("Cacheing Repositories...", func(msgch chan<- string) error {
 		wg := pool.New().
+			WithMaxGoroutines(ctrl.conf.Concurrency).
 			WithErrors().
 			WithContext(ctx)
 
@@ -23,14 +24,11 @@ func (ctrl *Controller) Cache(ctx context.Context) error {
 			msgch <- fmt.Sprintf("Total repositories: %d", total)
 		}
 
-		sem := make(chan struct{}, ctrl.conf.Concurrency)
+		collectionch := make(chan []repos.Repository, 1)
 
 		for i := range ctrl.conf.Sources {
 			source := ctrl.conf.Sources[i]
 			wg.Go(func(ctx context.Context) error {
-				sem <- struct{}{}
-				defer func() { <-sem }()
-
 				client, err := ctrl.client(source.Type, source.Token())
 				if err != nil {
 					return err
@@ -41,12 +39,33 @@ func (ctrl *Controller) Cache(ctx context.Context) error {
 					return err
 				}
 
+				collectionch <- repos
+
 				appendTotal(len(repos))
 				return nil
 			})
 		}
 
-		return wg.Wait()
+		items := make([]repos.Repository, 0, total)
+		colwg := pool.New()
+		colwg.Go(func() {
+			for repos := range collectionch {
+				items = append(items, repos...)
+			}
+		})
+
+		err := wg.Wait()
+		if err != nil {
+			return err
+		}
+
+		close(collectionch)
+		colwg.Wait()
+
+		msgch <- fmt.Sprintf("Total repositories: %d", len(items))
+		msgch <- "Saving repositories to database..."
+
+		return ctrl.repos.UpsertMany(ctx, items)
 	})
 }
 
