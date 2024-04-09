@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,7 @@ func NewGithubClient(httpclient *http.Client, token string) *GithubClient {
 
 func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 	return Repository{
+		RemoteID:    strconv.FormatInt(repo.GetID(), 10),
 		Name:        repo.GetName(),
 		Username:    repo.GetOwner().GetLogin(),
 		Description: repo.GetDescription(),
