@@ -58,12 +58,25 @@ FROM
   repository_artifact 
 WHERE 
   repository_id = ? 
-  AND type = ?;
+  AND data_type = ?;
 
--- name: RepoCreateArtifact :one 
+-- name: RepoUpsertArtifact :one 
 INSERT INTO 
-  repository_artifact (repository_id, type, data)  
+  repository_artifact (repository_id, data_type, data)  
 VALUES 
   (?, ?, ?)
+ON CONFLICT (repository_id, data_type)
+DO UPDATE SET 
+  data = EXCLUDED.data  
 RETURNING
   *;
+
+-- name: RepoUpdateArtifact :exec
+UPDATE
+  repository_artifact
+SET
+  data = ?
+WHERE 
+  repository_id = ?
+  AND data_type = ?
+

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
 	"github.com/go-faker/faker/v4"
@@ -105,5 +106,35 @@ func Test_RepositoryService_UpsertOne(t *testing.T) {
 		t.Fatalf("expected 1 record, got %d", len(all))
 	}
 
-  compareRepository(is, all[0], item) 
+	compareRepository(is, all[0], item)
+}
+
+func Test_RepositoryService_GetReadme(t *testing.T) {
+	service := tServiceFactory(t)
+	is := is.New(t)
+
+	want := factory(1)[0]
+
+	err := service.UpsertOne(context.Background(), want)
+	is.NoErr(err)
+
+	_, err = service.GetReadme(context.Background(), want.ID)
+	is.True(errors.Is(err, ErrNoReadmeFound)) // no readme should exist
+
+	err = service.SetReadme(context.Background(), want.ID, []byte("hello world"))
+	is.NoErr(err)
+
+	got, err := service.GetReadme(context.Background(), want.ID)
+	is.NoErr(err)
+
+	is.Equal(string(got), "hello world")
+
+	// reset readme to different value (upsert)
+	err = service.SetReadme(context.Background(), want.ID, []byte("hello world 2"))
+	is.NoErr(err)
+
+	got, err = service.GetReadme(context.Background(), want.ID)
+	is.NoErr(err)
+
+	is.Equal(string(got), "hello world 2")
 }

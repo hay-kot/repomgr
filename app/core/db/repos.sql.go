@@ -11,21 +11,21 @@ import (
 
 const repoArtifactByType = `-- name: RepoArtifactByType :many
 SELECT 
-  id, type, data, repository_id 
+  id, data_type, data, repository_id 
 FROM  
   repository_artifact 
 WHERE 
   repository_id = ? 
-  AND type = ?
+  AND data_type = ?
 `
 
 type RepoArtifactByTypeParams struct {
 	RepositoryID int64
-	Type         string
+	DataType     string
 }
 
 func (q *Queries) RepoArtifactByType(ctx context.Context, arg RepoArtifactByTypeParams) ([]RepositoryArtifact, error) {
-	rows, err := q.db.QueryContext(ctx, repoArtifactByType, arg.RepositoryID, arg.Type)
+	rows, err := q.db.QueryContext(ctx, repoArtifactByType, arg.RepositoryID, arg.DataType)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (q *Queries) RepoArtifactByType(ctx context.Context, arg RepoArtifactByType
 		var i RepositoryArtifact
 		if err := rows.Scan(
 			&i.ID,
-			&i.Type,
+			&i.DataType,
 			&i.Data,
 			&i.RepositoryID,
 		); err != nil {
@@ -54,7 +54,7 @@ func (q *Queries) RepoArtifactByType(ctx context.Context, arg RepoArtifactByType
 
 const repoArtifacts = `-- name: RepoArtifacts :many
 SELECT
-  id, type, data, repository_id 
+  id, data_type, data, repository_id 
 FROM  
   repository_artifact 
 WHERE 
@@ -72,7 +72,7 @@ func (q *Queries) RepoArtifacts(ctx context.Context, repositoryID int64) ([]Repo
 		var i RepositoryArtifact
 		if err := rows.Scan(
 			&i.ID,
-			&i.Type,
+			&i.DataType,
 			&i.Data,
 			&i.RepositoryID,
 		); err != nil {
@@ -132,31 +132,25 @@ func (q *Queries) RepoCreate(ctx context.Context, arg RepoCreateParams) (Reposit
 	return i, err
 }
 
-const repoCreateArtifact = `-- name: RepoCreateArtifact :one
-INSERT INTO 
-  repository_artifact (repository_id, type, data)  
-VALUES 
-  (?, ?, ?)
-RETURNING
-  id, type, data, repository_id
+const repoUpdateArtifact = `-- name: RepoUpdateArtifact :exec
+UPDATE
+  repository_artifact
+SET
+  data = ?
+WHERE 
+  repository_id = ?
+  AND data_type = ?
 `
 
-type RepoCreateArtifactParams struct {
-	RepositoryID int64
-	Type         string
+type RepoUpdateArtifactParams struct {
 	Data         []byte
+	RepositoryID int64
+	DataType     string
 }
 
-func (q *Queries) RepoCreateArtifact(ctx context.Context, arg RepoCreateArtifactParams) (RepositoryArtifact, error) {
-	row := q.db.QueryRowContext(ctx, repoCreateArtifact, arg.RepositoryID, arg.Type, arg.Data)
-	var i RepositoryArtifact
-	err := row.Scan(
-		&i.ID,
-		&i.Type,
-		&i.Data,
-		&i.RepositoryID,
-	)
-	return i, err
+func (q *Queries) RepoUpdateArtifact(ctx context.Context, arg RepoUpdateArtifactParams) error {
+	_, err := q.db.ExecContext(ctx, repoUpdateArtifact, arg.Data, arg.RepositoryID, arg.DataType)
+	return err
 }
 
 const repoUpsert = `-- name: RepoUpsert :one
@@ -205,6 +199,36 @@ func (q *Queries) RepoUpsert(ctx context.Context, arg RepoUpsertParams) (Reposit
 		&i.CloneUrl,
 		&i.CloneSshUrl,
 		&i.IsFork,
+	)
+	return i, err
+}
+
+const repoUpsertArtifact = `-- name: RepoUpsertArtifact :one
+INSERT INTO 
+  repository_artifact (repository_id, data_type, data)  
+VALUES 
+  (?, ?, ?)
+ON CONFLICT (repository_id, data_type)
+DO UPDATE SET 
+  data = EXCLUDED.data  
+RETURNING
+  id, data_type, data, repository_id
+`
+
+type RepoUpsertArtifactParams struct {
+	RepositoryID int64
+	DataType     string
+	Data         []byte
+}
+
+func (q *Queries) RepoUpsertArtifact(ctx context.Context, arg RepoUpsertArtifactParams) (RepositoryArtifact, error) {
+	row := q.db.QueryRowContext(ctx, repoUpsertArtifact, arg.RepositoryID, arg.DataType, arg.Data)
+	var i RepositoryArtifact
+	err := row.Scan(
+		&i.ID,
+		&i.DataType,
+		&i.Data,
+		&i.RepositoryID,
 	)
 	return i, err
 }

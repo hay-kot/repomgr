@@ -11,8 +11,9 @@ CREATE TABLE repository (
 
 CREATE TABLE repository_artifact (
   id            INTEGER PRIMARY KEY,
-  type          TEXT    NOT NULL,
+  data_type     TEXT    NOT NULL,
   data          BLOB    NOT NULL,
   repository_id INTEGER NOT NULL,
-  FOREIGN KEY (repository_id) REFERENCES repository(id) ON DELETE CASCADE
-); 
+  FOREIGN KEY (repository_id) REFERENCES repository(id) ON DELETE CASCADE,
+  UNIQUE(repository_id, data_type)
+);

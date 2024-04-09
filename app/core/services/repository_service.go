@@ -79,26 +79,28 @@ func (s *RepositoryService) UpsertOne(ctx context.Context, item repos.Repository
 	return s.UpsertMany(ctx, []repos.Repository{item})
 }
 
+var ErrNoReadmeFound = errors.New("no readme found")
+
 func (s *RepositoryService) GetReadme(ctx context.Context, repoID int) ([]byte, error) {
 	v, err := s.db.RepoArtifactByType(ctx, db.RepoArtifactByTypeParams{
 		RepositoryID: int64(repoID),
-		Type:         ArtifactTypeReadme.String(),
+		DataType:     ArtifactTypeReadme.String(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	if len(v) == 0 {
-		return nil, errors.New("no readme found")
+		return nil, ErrNoReadmeFound
 	}
 
 	return v[0].Data, nil
 }
 
 func (s *RepositoryService) SetReadme(ctx context.Context, repoID int, data []byte) error {
-	_, err := s.db.RepoCreateArtifact(ctx, db.RepoCreateArtifactParams{
+	_, err := s.db.RepoUpsertArtifact(ctx, db.RepoUpsertArtifactParams{
 		RepositoryID: int64(repoID),
-		Type:         ArtifactTypeReadme.String(),
+		DataType:     ArtifactTypeReadme.String(),
 		Data:         data,
 	})
 	if err != nil {

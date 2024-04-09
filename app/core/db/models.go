@@ -17,7 +17,7 @@ type Repository struct {
 
 type RepositoryArtifact struct {
 	ID           int64
-	Type         string
+	DataType     string
 	Data         []byte
 	RepositoryID int64
 }
