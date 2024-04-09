@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/hay-kot/repomgr/internal/styles"
 )
 
 type Spinner struct {
@@ -46,7 +47,7 @@ func NewSpinnerFunc(initial string, fn func(ch chan<- string) error) error {
 func NewSpinner(ch chan string, done chan struct{}, msg string) *Spinner {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("250"))
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color(styles.ColorPrimary))
 
 	spin := &Spinner{
 		spinner: s,
