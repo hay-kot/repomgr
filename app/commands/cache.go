@@ -4,59 +4,50 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hay-kot/repomgr/app/commands/ui"
 	"github.com/hay-kot/repomgr/app/core/config"
 	"github.com/hay-kot/repomgr/app/repos"
+	"github.com/sourcegraph/conc/pool"
 )
 
 func (ctrl *Controller) Cache(ctx context.Context) error {
-	msgch := make(chan string)
-	defer close(msgch)
-	spinner := ui.NewSpinner(msgch, "Caching repositories...")
+	return ui.NewSpinnerFunc("Cacheing Repositories...", func(msgch chan<- string) error {
+		wg := pool.New().
+			WithErrors().
+			WithContext(ctx)
 
-	sem := make(chan struct{}, ctrl.conf.Concurrency)
-	defer close(sem)
+		total := 0
+		appendTotal := func(v int) {
+			total += v
+			msgch <- fmt.Sprintf("Total repositories: %d", total)
+		}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(len(ctrl.conf.Sources))
+		sem := make(chan struct{}, ctrl.conf.Concurrency)
 
-	total := 0
-	appendTotal := func(v int) {
-		total += v
-		msgch <- fmt.Sprintf("Total repositories: %d", total)
-	}
+		for i := range ctrl.conf.Sources {
+			source := ctrl.conf.Sources[i]
+			wg.Go(func(ctx context.Context) error {
+				sem <- struct{}{}
+				defer func() { <-sem }()
 
-	for _, source := range ctrl.conf.Sources {
-		go func(source config.Source) {
-			defer wg.Done()
+				client, err := ctrl.client(source.Type, source.Token())
+				if err != nil {
+					return err
+				}
 
-			sem <- struct{}{}
-			defer func() { <-sem }()
+				repos, err := client.GetAllByUsername(ctx, source.Username)
+				if err != nil {
+					return err
+				}
 
-			client, err := ctrl.client(source.Type, source.Token())
-			if err != nil {
-				return
-			}
+				appendTotal(len(repos))
+				return nil
+			})
+		}
 
-			repos, err := client.GetAllByUsername(ctx, source.Username)
-			if err != nil {
-				return
-			}
-
-			appendTotal(len(repos))
-		}(source)
-	}
-
-	wg.Wait()
-	p := tea.NewProgram(spinner)
-	_, err := p.Run()
-	if err != nil {
-		panic(err)
-	}
-	return nil
+		return wg.Wait()
+	})
 }
 
 func (ctrl *Controller) client(t config.SourceType, token string) (repos.RepositoryClient, error) {

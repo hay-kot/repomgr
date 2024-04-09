@@ -16,7 +16,34 @@ type Spinner struct {
 
 var _ tea.Model = &Spinner{}
 
-func NewSpinner(ch chan string, msg string) *Spinner {
+// NewSpinnerFunc creates a new spiner with a given initial message and a function that
+// will be executed in the background in a goroutine. The function can use the provided
+// channel to send message stop the spinner to update the out. When the function returns
+// the spinner will stop and the function will return the error result from the function.
+func NewSpinnerFunc(initial string, fn func(ch chan<- string) error) error {
+	var (
+		done  = make(chan struct{})
+		msgch = make(chan string)
+	)
+
+	spinner := NewSpinner(msgch, done, initial)
+
+	var outerr error
+	go func() {
+		outerr = fn(msgch)
+		close(done)
+	}()
+
+	p := tea.NewProgram(spinner)
+	_, err := p.Run()
+	if err != nil {
+		return err
+	}
+
+	return outerr
+}
+
+func NewSpinner(ch chan string, done chan struct{}, msg string) *Spinner {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("250"))
@@ -33,6 +60,11 @@ func NewSpinner(ch chan string, msg string) *Spinner {
 		}
 	}()
 
+	go func() {
+		<-done
+		spin.quitting = true
+	}()
+
 	return spin
 }
 
@@ -43,6 +75,10 @@ func (s *Spinner) Init() tea.Cmd {
 
 // Update implements tea.Model.
 func (s *Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if s.quitting {
+		return s, tea.Quit
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {

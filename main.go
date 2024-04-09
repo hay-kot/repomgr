@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
+	"github.com/hay-kot/repomgr/app/commands/ui"
 	"github.com/hay-kot/repomgr/app/core/config"
 )
 
@@ -112,16 +114,37 @@ func main() {
 				},
 			},
 			{
-				Name:   "dump-config",
+				Name:   "dev",
 				Hidden: true,
-				Action: func(ctx *cli.Context) error {
-					cfgstr, err := cfg.Dump()
-					if err != nil {
-						return err
-					}
+				Subcommands: []*cli.Command{
+					{
+						Name:  "config",
+						Usage: "dumps the config to console with default supsutitions",
+						Action: func(ctx *cli.Context) error {
+							cfgstr, err := cfg.Dump()
+							if err != nil {
+								return err
+							}
 
-					fmt.Println(cfgstr)
-					return nil
+							fmt.Println(cfgstr)
+							return nil
+						},
+					},
+					{
+						Name:  "spinner",
+						Usage: "test spinner",
+						Action: func(ctx *cli.Context) error {
+							return ui.NewSpinnerFunc("loading...", func(ch chan<- string) error {
+								for i := 0; i < 10; i++ {
+									ch <- fmt.Sprintf("loading... %d", i)
+
+									time.Sleep(300 * time.Millisecond)
+								}
+
+								return nil
+							})
+						},
+					},
 				},
 			},
 		},

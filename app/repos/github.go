@@ -27,14 +27,14 @@ func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 		Description: repo.GetDescription(),
 		CloneURL:    repo.GetCloneURL(),
 		CloneSSHURL: repo.GetSSHURL(),
-    IsFork:      repo.GetFork(),
+		IsFork:      repo.GetFork(),
 	}
 }
 
 // GetAllByUsername implements RepositoryClient.
 func (g *GithubClient) GetAllByUsername(ctx context.Context, username string) ([]Repository, error) {
 	opt := &github.RepositoryListByUserOptions{
-		ListOptions: github.ListOptions{PerPage: 10},
+		ListOptions: github.ListOptions{PerPage: 100},
 	}
 	// get all pages of results
 	var allRepos []*github.Repository
