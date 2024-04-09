@@ -1,16 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
-	"time"
+	"os/signal"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
+	"github.com/hay-kot/repomgr/app/core/config"
 )
 
 var (
@@ -33,6 +35,12 @@ func main() {
 	ctrl := &commands.Controller{
 		Flags: &commands.Flags{},
 	}
+
+	appctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	cfg := &config.Config{}
+
 	app := &cli.App{
 		Name:    "Repo Manager",
 		Usage:   "Repository Management TUI/CLI for working with Github Projects",
@@ -51,6 +59,27 @@ func main() {
 				Value:   "repomgr.log",
 				EnvVars: []string{"REPOMGR_LOG_FILE"},
 			},
+			&cli.PathFlag{
+				Name:    "config",
+				Usage:   "config file",
+				Value:   "",
+				EnvVars: []string{"REPOMGR_CONFIG"},
+				Action: func(ctx *cli.Context, p cli.Path) error {
+					f, err := os.Open(p)
+					if err != nil {
+						return fmt.Errorf("failed to open config file: %w", err)
+					}
+
+					defer f.Close()
+
+					cfg, err = config.New(f)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				},
+			},
 		},
 		Before: func(ctx *cli.Context) error {
 			var writer io.Writer
@@ -66,6 +95,8 @@ func main() {
 				writer = f
 			}
 
+			// TODO: remove color from logs in prod, but keep it in dev
+			// for nice tail output
 			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
 
 			level, err := zerolog.ParseLevel(ctrl.Flags.LogLevel)
@@ -76,15 +107,27 @@ func main() {
 			zerolog.SetGlobalLevel(level)
 			return nil
 		},
-		Action: func(ctx *cli.Context) error {
-			count := 0
-			for {
-				log.Info().
-					Int("count", count).
-					Msg("Hello World")
-				time.Sleep(200 * time.Millisecond)
-				count++
-			}
+		Commands: []*cli.Command{
+			{
+				Name:  "cache",
+				Usage: "cache controls for the database",
+				Action: func(ctx *cli.Context) error {
+					return ctrl.Cache(appctx, cfg)
+				},
+			},
+			{
+				Name:   "dump-config",
+				Hidden: true,
+				Action: func(ctx *cli.Context) error {
+					cfgstr, err := cfg.Dump()
+					if err != nil {
+						return err
+					}
+
+					fmt.Println(cfgstr)
+					return nil
+				},
+			},
 		},
 	}
 

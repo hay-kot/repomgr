@@ -1,0 +1,442 @@
+[
+  {
+    "Name": "act",
+    "Username": "hay-kot",
+    "Description": "Run your GitHub Actions locally 🚀",
+    "CloneURL": "https://github.com/hay-kot/act.git",
+    "CloneSSHURL": "git@github.com:hay-kot/act.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "argon2id",
+    "Username": "hay-kot",
+    "Description": "Argon2id password hashing and verification for Go",
+    "CloneURL": "https://github.com/hay-kot/argon2id.git",
+    "CloneSSHURL": "git@github.com:hay-kot/argon2id.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "autoalchemy",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/autoalchemy.git",
+    "CloneSSHURL": "git@github.com:hay-kot/autoalchemy.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "cli",
+    "Username": "hay-kot",
+    "Description": "A simple, fast, and fun package for building command line apps in Go",
+    "CloneURL": "https://github.com/hay-kot/cli.git",
+    "CloneSSHURL": "git@github.com:hay-kot/cli.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "clid",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/clid.git",
+    "CloneSSHURL": "git@github.com:hay-kot/clid.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "clive",
+    "Username": "hay-kot",
+    "Description": "CLI, made Very Easy! This compacts the huge declaration of a `cli.App` into a declarative, (mostly) compile-time checked and automated generator based on struct tags.",
+    "CloneURL": "https://github.com/hay-kot/clive.git",
+    "CloneSSHURL": "git@github.com:hay-kot/clive.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "cookiecutter-pybase",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/cookiecutter-pybase.git",
+    "CloneSSHURL": "git@github.com:hay-kot/cookiecutter-pybase.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "dotfiles",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/dotfiles.git",
+    "CloneSSHURL": "git@github.com:hay-kot/dotfiles.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "dotfiles-windows",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/dotfiles-windows.git",
+    "CloneSSHURL": "git@github.com:hay-kot/dotfiles-windows.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "drone-ansible",
+    "Username": "hay-kot",
+    "Description": "Drone plugin to provision via Ansible - Updated and Released",
+    "CloneURL": "https://github.com/hay-kot/drone-ansible.git",
+    "CloneSSHURL": "git@github.com:hay-kot/drone-ansible.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "dynodns",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/dynodns.git",
+    "CloneSSHURL": "git@github.com:hay-kot/dynodns.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "easyemails",
+    "Username": "hay-kot",
+    "Description": "easyemails provides a simple API for creating transactional emails in Go",
+    "CloneURL": "https://github.com/hay-kot/easyemails.git",
+    "CloneSSHURL": "git@github.com:hay-kot/easyemails.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "examples-pg-locking",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/examples-pg-locking.git",
+    "CloneSSHURL": "git@github.com:hay-kot/examples-pg-locking.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "flint",
+    "Username": "hay-kot",
+    "Description": "Customizable linter for frontmatter",
+    "CloneURL": "https://github.com/hay-kot/flint.git",
+    "CloneSSHURL": "git@github.com:hay-kot/flint.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "ghdb",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/ghdb.git",
+    "CloneSSHURL": "git@github.com:hay-kot/ghdb.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "gkit",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/gkit.git",
+    "CloneSSHURL": "git@github.com:hay-kot/gkit.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "go-collections",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/go-collections.git",
+    "CloneSSHURL": "git@github.com:hay-kot/go-collections.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "go-recipe",
+    "Username": "hay-kot",
+    "Description": "Go package for scraping website recipes",
+    "CloneURL": "https://github.com/hay-kot/go-recipe.git",
+    "CloneSSHURL": "git@github.com:hay-kot/go-recipe.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "go-web-template",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/go-web-template.git",
+    "CloneSSHURL": "git@github.com:hay-kot/go-web-template.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "gofind",
+    "Username": "hay-kot",
+    "Description": "Gofind is a small cli program for quickly finding and searching directories using the producer/consumer pattern.",
+    "CloneURL": "https://github.com/hay-kot/gofind.git",
+    "CloneSSHURL": "git@github.com:hay-kot/gofind.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "GoGitter",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/GoGitter.git",
+    "CloneSSHURL": "git@github.com:hay-kot/GoGitter.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "gonv",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/gonv.git",
+    "CloneSSHURL": "git@github.com:hay-kot/gonv.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "gotmpl",
+    "Username": "hay-kot",
+    "Description": "Simple CLI for render a template file from a data file (TOML, JSON, YAML) using Go Templates with utility template functions",
+    "CloneURL": "https://github.com/hay-kot/gotmpl.git",
+    "CloneSSHURL": "git@github.com:hay-kot/gotmpl.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "gum",
+    "Username": "hay-kot",
+    "Description": "A tool for glamorous shell scripts 🎀",
+    "CloneURL": "https://github.com/hay-kot/gum.git",
+    "CloneSSHURL": "git@github.com:hay-kot/gum.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "hay-kot",
+    "Username": "hay-kot",
+    "Description": "Github Profile",
+    "CloneURL": "https://github.com/hay-kot/hay-kot.git",
+    "CloneSSHURL": "git@github.com:hay-kot/hay-kot.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "homebox",
+    "Username": "hay-kot",
+    "Description": "Homebox is the inventory and organization system built for the Home User",
+    "CloneURL": "https://github.com/hay-kot/homebox.git",
+    "CloneSSHURL": "git@github.com:hay-kot/homebox.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "homebrew-flint-tap",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/homebrew-flint-tap.git",
+    "CloneSSHURL": "git@github.com:hay-kot/homebrew-flint-tap.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "homebrew-gotmpl-tap",
+    "Username": "hay-kot",
+    "Description": "Homebrew tap for Gotmpl is a command line tool to generate files from template and data files",
+    "CloneURL": "https://github.com/hay-kot/homebrew-gotmpl-tap.git",
+    "CloneSSHURL": "git@github.com:hay-kot/homebrew-gotmpl-tap.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "homebrew-scaffold-tap",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/homebrew-scaffold-tap.git",
+    "CloneSSHURL": "git@github.com:hay-kot/homebrew-scaffold-tap.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "httpkit",
+    "Username": "hay-kot",
+    "Description": "Experimental minimal Go server framework w/ central error handling, tracebacks, and graceful shutdown",
+    "CloneURL": "https://github.com/hay-kot/httpkit.git",
+    "CloneSSHURL": "git@github.com:hay-kot/httpkit.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "infra",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/infra.git",
+    "CloneSSHURL": "git@github.com:hay-kot/infra.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "mac-dev-playbook",
+    "Username": "hay-kot",
+    "Description": "Mac setup and configuration via Ansible.",
+    "CloneURL": "https://github.com/hay-kot/mac-dev-playbook.git",
+    "CloneSSHURL": "git@github.com:hay-kot/mac-dev-playbook.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "meilisearch-go",
+    "Username": "hay-kot",
+    "Description": "Golang wrapper for the Meilisearch API ",
+    "CloneURL": "https://github.com/hay-kot/meilisearch-go.git",
+    "CloneSSHURL": "git@github.com:hay-kot/meilisearch-go.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "microbin",
+    "Username": "hay-kot",
+    "Description": "A tiny, self-contained, configurable paste bin and URL shortener written in Rust.",
+    "CloneURL": "https://github.com/hay-kot/microbin.git",
+    "CloneSSHURL": "git@github.com:hay-kot/microbin.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "mkdocs-material",
+    "Username": "hay-kot",
+    "Description": "Documentation that simply works",
+    "CloneURL": "https://github.com/hay-kot/mkdocs-material.git",
+    "CloneSSHURL": "git@github.com:hay-kot/mkdocs-material.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "Neovim-from-scratch",
+    "Username": "hay-kot",
+    "Description": "📚 A Neovim config designed from scratch to be understandable",
+    "CloneURL": "https://github.com/hay-kot/Neovim-from-scratch.git",
+    "CloneSSHURL": "git@github.com:hay-kot/Neovim-from-scratch.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "noice.nvim",
+    "Username": "hay-kot",
+    "Description": "💥 Highly experimental plugin that completely replaces the UI for messages, cmdline and the popupmenu.",
+    "CloneURL": "https://github.com/hay-kot/noice.nvim.git",
+    "CloneSSHURL": "git@github.com:hay-kot/noice.nvim.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "nw",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/nw.git",
+    "CloneSSHURL": "git@github.com:hay-kot/nw.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "old_wiki",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/old_wiki.git",
+    "CloneSSHURL": "git@github.com:hay-kot/old_wiki.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "optional-types",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/optional-types.git",
+    "CloneSSHURL": "git@github.com:hay-kot/optional-types.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "parallel",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/parallel.git",
+    "CloneSSHURL": "git@github.com:hay-kot/parallel.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "recipe-scrapers",
+    "Username": "hay-kot",
+    "Description": "Python package for scraping recipes data",
+    "CloneURL": "https://github.com/hay-kot/recipe-scrapers.git",
+    "CloneSSHURL": "git@github.com:hay-kot/recipe-scrapers.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "recipes-api",
+    "Username": "hay-kot",
+    "Description": "Standalone API for parsing Recipes from websites and using Natural Language Processing to parse ingredients",
+    "CloneURL": "https://github.com/hay-kot/recipes-api.git",
+    "CloneSSHURL": "git@github.com:hay-kot/recipes-api.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "ruff",
+    "Username": "hay-kot",
+    "Description": "An extremely fast Python linter, written in Rust.",
+    "CloneURL": "https://github.com/hay-kot/ruff.git",
+    "CloneSSHURL": "git@github.com:hay-kot/ruff.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "scaffold",
+    "Username": "hay-kot",
+    "Description": "A cookie cutter alternative with in-project scaffolding for generating components, controllers, or other common code patterns.",
+    "CloneURL": "https://github.com/hay-kot/scaffold.git",
+    "CloneSSHURL": "git@github.com:hay-kot/scaffold.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "scaffold-go-cli",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/scaffold-go-cli.git",
+    "CloneSSHURL": "git@github.com:hay-kot/scaffold-go-cli.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "scaffold-go-pkg",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/scaffold-go-pkg.git",
+    "CloneSSHURL": "git@github.com:hay-kot/scaffold-go-pkg.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "scaffold-go-web",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/scaffold-go-web.git",
+    "CloneSSHURL": "git@github.com:hay-kot/scaffold-go-web.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "sprig",
+    "Username": "hay-kot",
+    "Description": "Useful template functions for Go templates.",
+    "CloneURL": "https://github.com/hay-kot/sprig.git",
+    "CloneSSHURL": "git@github.com:hay-kot/sprig.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "strcase",
+    "Username": "hay-kot",
+    "Description": "A golang package for converting to snake_case or CamelCase",
+    "CloneURL": "https://github.com/hay-kot/strcase.git",
+    "CloneSSHURL": "git@github.com:hay-kot/strcase.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "telescope-makefile",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/telescope-makefile.git",
+    "CloneSSHURL": "git@github.com:hay-kot/telescope-makefile.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "vim-test",
+    "Username": "hay-kot",
+    "Description": "Run your tests at the speed of thought",
+    "CloneURL": "https://github.com/hay-kot/vim-test.git",
+    "CloneSSHURL": "git@github.com:hay-kot/vim-test.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "Visio2PDF",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/Visio2PDF.git",
+    "CloneSSHURL": "git@github.com:hay-kot/Visio2PDF.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "woodpecker",
+    "Username": "hay-kot",
+    "Description": "Woodpecker is a community fork of the Drone CI system.",
+    "CloneURL": "https://github.com/hay-kot/woodpecker.git",
+    "CloneSSHURL": "git@github.com:hay-kot/woodpecker.git",
+    "ReadMe": ""
+  },
+  {
+    "Name": "yal",
+    "Username": "hay-kot",
+    "Description": "",
+    "CloneURL": "https://github.com/hay-kot/yal.git",
+    "CloneSSHURL": "git@github.com:hay-kot/yal.git",
+    "ReadMe": ""
+  }
+]
