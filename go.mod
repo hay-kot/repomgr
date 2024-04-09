@@ -9,6 +9,7 @@ require (
 	github.com/go-faker/faker/v4 v4.4.1
 	github.com/matryer/is v1.4.1
 	github.com/rs/zerolog v1.31.0
+	github.com/sourcegraph/conc v0.3.0
 	github.com/urfave/cli/v2 v2.26.0
 	modernc.org/sqlite v1.29.6
 )
@@ -30,7 +31,8 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

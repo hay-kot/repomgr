@@ -41,7 +41,7 @@ func main() {
 
 	cfg := &config.Config{}
 
-	console := console.NewConsole(os.Stdout, true)
+	cons := console.NewConsole(os.Stdout, true)
 
 	app := &cli.App{
 		Name:    "Repo Manager",
@@ -160,7 +160,12 @@ func main() {
 						Name:  "console",
 						Usage: "test/dump console outputs",
 						Action: func(ctx *cli.Context) error {
-							console.UnknownError("An unexpected error occurred", fmt.Errorf("this is an error"))
+							cons.UnknownError("An unexpected error occurred", fmt.Errorf("this is an error"))
+              cons.LineBreak()
+							cons.List("List of Items Title", []console.ListItem{
+								{StatusOk: true, Status: "Item 1 (Success) "},
+								{StatusOk: false, Status: "Item 2 (Error) "},
+							})
 							return nil
 						},
 					},
@@ -171,7 +176,7 @@ func main() {
 
 	if err := app.Run(os.Args); err != nil {
 		log.Err(err).Msg("app.Run")
-		console.UnknownError("An unexpected error occurred", err)
+		cons.UnknownError("An unexpected error occurred", err)
 		os.Exit(1)
 	}
 }
