@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/hay-kot/repomgr/app/core/db"
@@ -19,11 +20,15 @@ const (
 )
 
 type RepositoryService struct {
-	db *db.Queries
+	sql *sql.DB
+	db  *db.Queries
 }
 
-func NewRepositoryService(db *db.Queries) *RepositoryService {
-	return &RepositoryService{db: db}
+func NewRepositoryService(s *sql.DB) *RepositoryService {
+	return &RepositoryService{
+		sql: s,
+		db:  db.New(s),
+	}
 }
 
 func (s *RepositoryService) UpsertMany(ctx context.Context, items []repos.Repository) error {
