@@ -10,11 +10,11 @@ token = "env:REPOMGR_GH_TOKEN"
 [key_bindings]
 # if not ::<cmd> then it's a shell command to be executed
 # go-templates are supported
-"cmd+o" = "open {{ .CloneURL }}"
+"o" = "open {{ .CloneURL }}"
 # clones the repository in the project_dir
-"cmd+p" = "::clone"
+"c" = "::clone"
 # pulls the project in the directory, if not already present
 # clone as well
-"cmd+shift+p" = "::pull"
+"p" = "::pull"
 # exits the program and prints only the clone URL
 "enter" = "::return {{ .CloneURL }}"
