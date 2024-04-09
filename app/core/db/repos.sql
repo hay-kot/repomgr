@@ -67,4 +67,3 @@ VALUES
   (?, ?, ?)
 RETURNING
   *;
-

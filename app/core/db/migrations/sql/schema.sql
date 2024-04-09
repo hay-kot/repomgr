@@ -1,6 +1,6 @@
 CREATE TABLE repository (
   id            INTEGER PRIMARY KEY,
-  remote_id     TEXT NOT NULL,
+  remote_id     TEXT NOT NULL UNIQUE,
   name          TEXT NOT NULL,
   username      TEXT NOT NULL,
   description   TEXT NOT NULL,

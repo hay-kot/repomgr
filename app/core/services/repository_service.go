@@ -31,6 +31,29 @@ func NewRepositoryService(s *sql.DB) *RepositoryService {
 	}
 }
 
+func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, error) {
+	v, err := s.db.ReposGetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]repos.Repository, len(v))
+	for i, item := range v {
+		results[i] = repos.Repository{
+			ID:          int(item.ID),
+			RemoteID:    item.RemoteID,
+			Name:        item.Name,
+			Username:    item.Username,
+			Description: item.Description,
+			CloneURL:    item.CloneUrl,
+			CloneSSHURL: item.CloneSshUrl,
+			IsFork:      item.IsFork,
+		}
+	}
+
+	return results, nil
+}
+
 func (s *RepositoryService) UpsertMany(ctx context.Context, items []repos.Repository) error {
 	// TODO: implement transactions
 	tx := s.db
