@@ -1,16 +1,27 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"path/filepath"
 	"time"
+
+	_ "modernc.org/sqlite"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
+	"github.com/hay-kot/repomgr/app/commands/ui"
+	"github.com/hay-kot/repomgr/app/console"
+	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/services"
 )
 
 var (
@@ -30,32 +41,49 @@ func build() string {
 }
 
 func main() {
-	ctrl := &commands.Controller{
-		Flags: &commands.Flags{},
-	}
+	appctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	cfg := &config.Config{}
+
+	cons := console.NewConsole(os.Stdout, true)
+
 	app := &cli.App{
 		Name:    "Repo Manager",
 		Usage:   "Repository Management TUI/CLI for working with Github Projects",
 		Version: build(),
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "log-level",
-				Usage:       "log level (debug, info, warn, error, fatal, panic)",
-				Value:       "debug",
-				Destination: &ctrl.Flags.LogLevel,
-				EnvVars:     []string{"REPOMGR_LOG_LEVEL"},
-			},
 			&cli.PathFlag{
-				Name:    "log-file",
-				Usage:   "log file",
-				Value:   "repomgr.log",
-				EnvVars: []string{"REPOMGR_LOG_FILE"},
+				Name:    "config",
+				Usage:   "config file",
+				Value:   config.ExpandPath("", "~/.config/repomgr/config.toml"),
+				EnvVars: []string{"REPOMGR_CONFIG"},
+				Action: func(ctx *cli.Context, p cli.Path) error {
+					f, err := os.Open(p)
+					if err != nil {
+						return fmt.Errorf("failed to open config file: %w", err)
+					}
+
+					defer f.Close()
+
+					absolutePath, err := filepath.Abs(p)
+					if err != nil {
+						return err
+					}
+
+					cfg, err = config.New(absolutePath, f)
+					if err != nil {
+						return err
+					}
+
+					return cfg.PrepareDirectories()
+				},
 			},
 		},
 		Before: func(ctx *cli.Context) error {
 			var writer io.Writer
 
-			logFile := ctx.Path("log-file")
+			logFile := cfg.Logs.File
 			if logFile == "" {
 				writer = io.Discard
 			} else {
@@ -66,9 +94,14 @@ func main() {
 				writer = f
 			}
 
-			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
+			// TODO: remove color from logs in prod, but keep it in dev
+			// for nice tail output
+			log.Logger = log.Output(zerolog.ConsoleWriter{
+				Out:     writer,
+				NoColor: !cfg.Logs.Color,
+			})
 
-			level, err := zerolog.ParseLevel(ctrl.Flags.LogLevel)
+			level, err := zerolog.ParseLevel(ctx.String("log-level"))
 			if err != nil {
 				return err
 			}
@@ -76,19 +109,104 @@ func main() {
 			zerolog.SetGlobalLevel(level)
 			return nil
 		},
-		Action: func(ctx *cli.Context) error {
-			count := 0
-			for {
-				log.Info().
-					Int("count", count).
-					Msg("Hello World")
-				time.Sleep(200 * time.Millisecond)
-				count++
-			}
+		Commands: []*cli.Command{
+			{
+				Name:  "cache",
+				Usage: "cache controls for the database",
+				Action: func(ctx *cli.Context) error {
+					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+
+					defer sqldb.Close()
+					service, err := services.NewRepositoryService(sqldb)
+					if err != nil {
+						return err
+					}
+
+					ctrl := commands.NewController(cfg, service)
+					return ctrl.Cache(appctx)
+				},
+			},
+			{
+				Name:  "search",
+				Usage: "  search for repositories",
+				Action: func(ctx *cli.Context) error {
+					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+
+					defer sqldb.Close()
+					service, err := services.NewRepositoryService(sqldb)
+					if err != nil {
+						return err
+					}
+
+					ctrl := commands.NewController(cfg, service)
+          return ctrl.Search(appctx)
+				},
+			},
+			{
+				Name:   "dev",
+				Hidden: true,
+				Subcommands: []*cli.Command{
+					{
+						Name:  "config",
+						Usage: "dumps the config to console with default supsutitions",
+						Action: func(ctx *cli.Context) error {
+							cfgstr, err := cfg.Dump()
+							if err != nil {
+								return err
+							}
+
+							fmt.Println(cfgstr)
+							return nil
+						},
+					},
+					{
+						Name:  "spinner",
+						Usage: "test spinner",
+						Action: func(ctx *cli.Context) error {
+							return ui.NewSpinnerFunc("loading...", func(ch chan<- string) error {
+								for i := 0; i < 10; i++ {
+									ch <- fmt.Sprintf("loading... %d", i)
+									time.Sleep(300 * time.Millisecond)
+								}
+
+								return nil
+							})
+						},
+					},
+					{
+						Name:  "error",
+						Usage: "test/dump console outputs",
+						Action: func(ctx *cli.Context) error {
+							return errors.New("failed to run config file")
+						},
+					},
+					{
+						Name:  "console",
+						Usage: "test/dump console outputs",
+						Action: func(ctx *cli.Context) error {
+							cons.UnknownError("An unexpected error occurred", fmt.Errorf("this is an error"))
+							cons.LineBreak()
+							cons.List("List of Items Title", []console.ListItem{
+								{StatusOk: true, Status: "Item 1 (Success) "},
+								{StatusOk: false, Status: "Item 2 (Error) "},
+							})
+							return nil
+						},
+					},
+				},
+			},
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal().Err(err).Msg("failed to run Repo Manager")
+		log.Err(err).Msg("app.Run")
+		cons.UnknownError("An unexpected error occurred", err)
+		os.Exit(1)
 	}
 }

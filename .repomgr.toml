@@ -1,0 +1,29 @@
+project_dir = "./.temp/projects"
+
+[logs]
+file = "./.temp/repomgr.log"
+level = "debug"
+color = true
+
+[database]
+file = "./.temp/repomgr.db"
+params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
+
+[[sources]]
+type = "github"
+username = "hay-kot"
+organizations = []
+# token properties have special syntax for environment variables
+token = "env:REPOMGR_GH_TOKEN"
+
+[key_bindings]
+# if not ::<cmd> then it's a shell command to be executed
+# go-templates are supported
+"o" = "open {{ .CloneURL }}"
+# clones the repository in the project_dir
+"c" = "::clone"
+# pulls the project in the directory, if not already present
+# clone as well
+"p" = "::pull"
+# exits the program and prints only the clone URL
+"enter" = "::return {{ .CloneURL }}"
