@@ -148,7 +148,13 @@ func main() {
 					}
 
 					ctrl := commands.NewController(cfg, service)
-					return ctrl.Search(appctx)
+					r, err := ctrl.Search(appctx)
+					if err != nil {
+						return err
+					}
+
+          fmt.Println(r.DisplayName())
+          return nil
 				},
 			},
 			{

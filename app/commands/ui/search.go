@@ -26,7 +26,7 @@ type SearchCtrl struct {
 	keybinds config.KeyBindings
 }
 
-func NewSearch(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
+func NewSearchCtrl(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
 	return &SearchCtrl{
 		repos:    r,
 		keybinds: bindings,
@@ -55,8 +55,8 @@ func (c *SearchCtrl) Selected() repos.Repository {
 	return c.repos[idx]
 }
 
-// Search returns a sorted list of matches uses a fuzzy search algorithm
-func (c *SearchCtrl) Search(str string) []repos.Repository {
+// search returns a sorted list of matches uses a fuzzy search algorithm
+func (c *SearchCtrl) search(str string) []repos.Repository {
 	if str == "" {
 		c.searchLength = len(c.repos)
 		return c.repos
@@ -145,7 +145,7 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m SearchView) View() string {
-	results := m.ctrl.Search(m.search.Value())
+	results := m.ctrl.search(m.search.Value())
 	str := strings.Builder{}
 
 	// Calculate the number of allowed_rows we can display
