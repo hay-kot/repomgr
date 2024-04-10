@@ -2,7 +2,9 @@ package commands
 
 import (
 	"context"
-	"fmt"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/hay-kot/repomgr/app/commands/ui"
 )
 
 func (ctrl *Controller) Search(ctx context.Context) error {
@@ -11,8 +13,14 @@ func (ctrl *Controller) Search(ctx context.Context) error {
 		return err
 	}
 
-	for _, repo := range r {
-		fmt.Println(repo.Name)
+	search := ui.NewSearchView(ui.NewSearch(ctrl.conf.KeyBindings, r))
+	layout := ui.NewLayout(search)
+
+	p := tea.NewProgram(layout, tea.WithAltScreen())
+
+	_, err = p.Run()
+	if err != nil {
+		return err
 	}
 
 	return nil

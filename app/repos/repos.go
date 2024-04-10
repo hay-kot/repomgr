@@ -14,7 +14,11 @@ type Repository struct {
 	CloneURL    string
 	CloneSSHURL string
 	IsFork      bool
-	ForkURL string
+	ForkURL     string
+}
+
+func (r Repository) DisplayName() string {
+	return r.Username + "/" + r.Name
 }
 
 type RepositoryClient interface {
