@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"time"
 )
 
 func (ctrl *Controller) Search(ctx context.Context) error {
