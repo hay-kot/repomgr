@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
+
+	_ "modernc.org/sqlite"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -17,6 +21,7 @@ import (
 	"github.com/hay-kot/repomgr/app/commands/ui"
 	"github.com/hay-kot/repomgr/app/console"
 	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/services"
 )
 
 var (
@@ -48,22 +53,10 @@ func main() {
 		Usage:   "Repository Management TUI/CLI for working with Github Projects",
 		Version: build(),
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "log-level",
-				Usage:   "log level (debug, info, warn, error, fatal, panic)",
-				Value:   "debug",
-				EnvVars: []string{"REPOMGR_LOG_LEVEL"},
-			},
-			&cli.PathFlag{
-				Name:    "log-file",
-				Usage:   "log file",
-				Value:   "",
-				EnvVars: []string{"REPOMGR_LOG_FILE"},
-			},
 			&cli.PathFlag{
 				Name:    "config",
 				Usage:   "config file",
-				Value:   "",
+				Value:   config.ExpandPath("", "~/.config/repomgr/config.toml"),
 				EnvVars: []string{"REPOMGR_CONFIG"},
 				Action: func(ctx *cli.Context, p cli.Path) error {
 					f, err := os.Open(p)
@@ -73,19 +66,24 @@ func main() {
 
 					defer f.Close()
 
-					cfg, err = config.New(f)
+					absolutePath, err := filepath.Abs(p)
 					if err != nil {
 						return err
 					}
 
-					return nil
+					cfg, err = config.New(absolutePath, f)
+					if err != nil {
+						return err
+					}
+
+					return cfg.PrepareDirectories()
 				},
 			},
 		},
 		Before: func(ctx *cli.Context) error {
 			var writer io.Writer
 
-			logFile := ctx.Path("log-file")
+			logFile := cfg.Logs.File
 			if logFile == "" {
 				writer = io.Discard
 			} else {
@@ -98,7 +96,10 @@ func main() {
 
 			// TODO: remove color from logs in prod, but keep it in dev
 			// for nice tail output
-			log.Logger = log.Output(zerolog.ConsoleWriter{Out: writer})
+			log.Logger = log.Output(zerolog.ConsoleWriter{
+				Out:     writer,
+				NoColor: !cfg.Logs.Color,
+			})
 
 			level, err := zerolog.ParseLevel(ctx.String("log-level"))
 			if err != nil {
@@ -113,7 +114,18 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					ctrl := commands.NewController(cfg, nil)
+					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+
+					defer sqldb.Close()
+					service, err := services.NewRepositoryService(sqldb)
+					if err != nil {
+						return err
+					}
+
+					ctrl := commands.NewController(cfg, service)
 					return ctrl.Cache(appctx)
 				},
 			},
@@ -141,7 +153,6 @@ func main() {
 							return ui.NewSpinnerFunc("loading...", func(ch chan<- string) error {
 								for i := 0; i < 10; i++ {
 									ch <- fmt.Sprintf("loading... %d", i)
-
 									time.Sleep(300 * time.Millisecond)
 								}
 
@@ -161,7 +172,7 @@ func main() {
 						Usage: "test/dump console outputs",
 						Action: func(ctx *cli.Context) error {
 							cons.UnknownError("An unexpected error occurred", fmt.Errorf("this is an error"))
-              cons.LineBreak()
+							cons.LineBreak()
 							cons.List("List of Items Title", []console.ListItem{
 								{StatusOk: true, Status: "Item 1 (Success) "},
 								{StatusOk: false, Status: "Item 2 (Error) "},

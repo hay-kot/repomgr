@@ -10,9 +10,11 @@ type Repository struct {
 	Name        string
 	Username    string
 	Description string
+	HtmlUrl     string
 	CloneUrl    string
 	CloneSshUrl string
 	IsFork      bool
+	ForkUrl     string
 }
 
 type RepositoryArtifact struct {

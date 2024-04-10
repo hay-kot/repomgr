@@ -4,9 +4,11 @@ CREATE TABLE repository (
   name          TEXT NOT NULL,
   username      TEXT NOT NULL,
   description   TEXT NOT NULL,
+  html_url      TEXT NOT NULL, 
   clone_url     TEXT NOT NULL,
   clone_ssh_url TEXT NOT NULL,
-  is_fork       BOOLEAN NOT NULL
+  is_fork       BOOLEAN NOT NULL,
+  fork_url      TEXT NOT NULL
 );
 
 CREATE TABLE repository_artifact (

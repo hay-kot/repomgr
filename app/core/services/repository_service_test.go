@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/hay-kot/repomgr/app/core/db/migrations"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/matryer/is"
 	_ "modernc.org/sqlite"
@@ -19,12 +18,12 @@ func tServiceFactory(t *testing.T) *RepositoryService {
 		t.Fatal(err)
 	}
 
-	_, err = db.Exec(migrations.Schema)
+	service, err := NewRepositoryService(db)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return NewRepositoryService(db)
+	return service
 }
 
 func factory(n int) []repos.Repository {
@@ -35,9 +34,11 @@ func factory(n int) []repos.Repository {
 			Name:        faker.Name(),
 			Username:    faker.Username(),
 			Description: faker.Sentence(),
+			HTMLURL:     faker.URL(),
 			CloneURL:    faker.URL(),
 			CloneSSHURL: faker.URL(),
-			IsFork:      false,
+			IsFork:      true,
+			ForkURL:     faker.URL(),
 		}
 	}
 

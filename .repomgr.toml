@@ -1,4 +1,13 @@
-project_dir = "./temp/projects"
+project_dir = "./.temp/projects"
+
+[logs]
+file = "./.temp/repomgr.log"
+level = "debug"
+color = true
+
+[database]
+file = "./.temp/repomgr.db"
+params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
 
 [[sources]]
 type = "github"

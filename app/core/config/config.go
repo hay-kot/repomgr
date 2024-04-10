@@ -4,65 +4,34 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/rs/zerolog"
 )
-
-type SourceType string
-
-var SourceTypeGithub SourceType = "github"
-
-type Source struct {
-	Type          SourceType `toml:"type"`
-	Username      string     `toml:"username"`
-	Organizations []string   `toml:"organizations"`
-	TokenKey      string     `toml:"token"`
-}
-
-func (s Source) Token() string {
-	if strings.HasPrefix(s.TokenKey, "env:") {
-		return os.Getenv(strings.TrimPrefix(s.TokenKey, "env:"))
-	}
-
-	return s.TokenKey
-}
-
-func (s Source) Validate() error {
-	if s.Type == "" {
-		return fmt.Errorf("source type is required")
-	}
-
-	types := []SourceType{SourceTypeGithub}
-	var found bool
-	for _, t := range types {
-		if t == s.Type {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("source type is invalid")
-	}
-
-	if s.Username == "" {
-		return fmt.Errorf("source username is required")
-	}
-	return nil
-}
 
 type Config struct {
 	ProjectDir  string      `toml:"project_dir"`
 	KeyBindings KeyBindings `toml:"key_bindings"`
 	Concurrency int         `toml:"concurrency"`
 	Sources     []Source    `toml:"sources"`
+	Database    Database    `toml:"database"`
+	Logs        Logs        `toml:"logs"`
 }
 
-func New(reader io.Reader) (*Config, error) {
+func New(confpath string, reader io.Reader) (*Config, error) {
 	cfg := Config{
 		Concurrency: runtime.NumCPU(),
+		Logs: Logs{
+			Level: zerolog.InfoLevel,
+			File:  "",
+		},
+		Database: Database{
+			File:   "~/config/repomgr/repos.db",
+			Params: "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1",
+		},
 	}
 
 	_, err := toml.NewDecoder(reader).Decode(&cfg)
@@ -75,7 +44,27 @@ func New(reader io.Reader) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.ProjectDir = ExpandPath(confpath, cfg.ProjectDir)
+	cfg.Database.File = ExpandPath(confpath, cfg.Database.File)
+	cfg.Logs.File = ExpandPath(confpath, cfg.Logs.File)
+
 	return &cfg, nil
+}
+
+func (c Config) PrepareDirectories() error {
+	dirs := []string{
+		c.ProjectDir,
+		filepath.Dir(c.Database.File),
+		filepath.Dir(c.Logs.File),
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c Config) Validate() error {
@@ -91,8 +80,17 @@ func (c Config) Validate() error {
 		return fmt.Errorf("project_dir is required")
 	}
 
+	validators := []validator{
+		c.KeyBindings,
+		c.Database,
+	}
+
 	for _, source := range c.Sources {
-		if err := source.Validate(); err != nil {
+		validators = append(validators, source)
+	}
+
+	for _, v := range validators {
+		if err := v.Validate(); err != nil {
 			return err
 		}
 	}
@@ -107,46 +105,25 @@ func (c Config) Dump() (string, error) {
 	return b.String(), err
 }
 
-type KeyCommand string
-
-func (k KeyCommand) String() string {
-	return string(k)
+type Logs struct {
+	Level zerolog.Level `toml:"level"`
+	File  string        `toml:"file"`
+	Color bool          `toml:"color"`
 }
 
-func (k KeyCommand) IsValid() error {
-	str := string(k)
-	if strings.HasPrefix("::", str) {
-		validoptions := []string{"::open", "::clone", "::shell"}
-
-		// check if it's a valid option
-		var found bool
-		for _, option := range validoptions {
-			if option == str {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return fmt.Errorf("invalid command '%s'", str)
-		}
-
-		return nil
-	}
-
-	// assume that it's a shell command
-	return nil
+type Database struct {
+	File   string `toml:"file"`
+	Params string `toml:"params"`
 }
 
-type KeyBindings map[string]KeyCommand
-
-func (k KeyBindings) Validate() error {
-	for key, cmd := range k {
-		err := cmd.IsValid()
-		if err != nil {
-			return fmt.Errorf("invalid command for key %s: %w", key, err)
-		}
+func (d Database) Validate() error {
+	if d.File == "" {
+		return fmt.Errorf("database file is required")
 	}
 
 	return nil
+}
+
+func (d Database) DNS() string {
+	return fmt.Sprintf("file:%s?%s", d.File, d.Params)
 }

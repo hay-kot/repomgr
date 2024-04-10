@@ -1,24 +1,45 @@
 -- name: RepoCreate :one
 INSERT INTO 
-  repository (remote_id, name, username, description, clone_url, clone_ssh_url, is_fork)
+  repository (
+      remote_id, 
+      name, 
+      username, 
+      description, 
+      html_url, 
+      clone_url, 
+      clone_ssh_url, 
+      is_fork,
+      fork_url
+  )
 VALUES 
-  (?, ?, ?, ?, ?, ?, ?)
+  (?, ?, ?, ?, ?, ?, ?, ?, ?) 
 RETURNING 
   *;  
 
 -- name: RepoUpsert :one  
 INSERT INTO 
-  repository (remote_id, name, username, description, clone_url, clone_ssh_url, is_fork)  
+  repository (
+      remote_id, 
+      name, 
+      username, 
+      description, 
+      html_url, 
+      clone_url, 
+      clone_ssh_url, 
+      is_fork,
+      fork_url  
+  ) 
 VALUES 
-  (?, ?, ?, ?, ?, ?, ?) 
+  (?, ?, ?, ?, ?, ?, ?, ?, ?) 
 ON CONFLICT (remote_id) 
 DO UPDATE SET 
   name = EXCLUDED.name, 
   username = EXCLUDED.username, 
   description = EXCLUDED.description, 
+  html_url = EXCLUDED.html_url, 
   clone_url = EXCLUDED.clone_url, 
   clone_ssh_url = EXCLUDED.clone_ssh_url, 
-  is_fork = EXCLUDED.is_fork  
+  is_fork = EXCLUDED.is_fork
 RETURNING *;
 
 -- name: ReposByUsernameLike :many

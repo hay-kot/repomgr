@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/hay-kot/repomgr/app/core/db"
+	"github.com/hay-kot/repomgr/app/core/db/migrations"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
@@ -24,11 +25,16 @@ type RepositoryService struct {
 	db  *db.Queries
 }
 
-func NewRepositoryService(s *sql.DB) *RepositoryService {
+func NewRepositoryService(s *sql.DB) (*RepositoryService, error) {
+	_, err := s.Exec(migrations.Schema)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RepositoryService{
 		sql: s,
 		db:  db.New(s),
-	}
+	}, nil
 }
 
 func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, error) {
@@ -45,9 +51,11 @@ func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, err
 			Name:        item.Name,
 			Username:    item.Username,
 			Description: item.Description,
+			HTMLURL:     item.HtmlUrl,
 			CloneURL:    item.CloneUrl,
 			CloneSSHURL: item.CloneSshUrl,
 			IsFork:      item.IsFork,
+			ForkURL:     item.ForkUrl,
 		}
 	}
 
@@ -63,9 +71,11 @@ func (s *RepositoryService) UpsertMany(ctx context.Context, items []repos.Reposi
 			Name:        item.Name,
 			Username:    item.Username,
 			Description: item.Description,
+			HtmlUrl:     item.HTMLURL,
 			CloneUrl:    item.CloneURL,
 			CloneSshUrl: item.CloneSSHURL,
 			IsFork:      item.IsFork,
+			ForkUrl:     item.ForkURL,
 		})
 		if err != nil {
 			return err

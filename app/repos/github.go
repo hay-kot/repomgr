@@ -22,14 +22,35 @@ func NewGithubClient(httpclient *http.Client, token string) *GithubClient {
 }
 
 func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
+	username := ""
+	if repo.GetOwner() != nil {
+		username = repo.GetOwner().GetLogin()
+	} else if repo.GetOrganization() != nil {
+		username = repo.GetOrganization().GetLogin()
+	}
+
+	fork_url := ""
+	if repo.GetFork() {
+		parenet := repo.GetParent()
+		if parenet != nil {
+			fork_url = parenet.GetHTMLURL()
+		} else {
+			log.Warn().
+				Str("repo", repo.GetHTMLURL()).
+				Msg(" forked repo does not have parent")
+		}
+	}
+
 	return Repository{
 		RemoteID:    strconv.FormatInt(repo.GetID(), 10),
 		Name:        repo.GetName(),
-		Username:    repo.GetOwner().GetLogin(),
+		Username:    username,
 		Description: repo.GetDescription(),
+		HTMLURL:     repo.GetHTMLURL(),
 		CloneURL:    repo.GetCloneURL(),
 		CloneSSHURL: repo.GetSSHURL(),
 		IsFork:      repo.GetFork(),
+		ForkURL:     fork_url,
 	}
 }
 

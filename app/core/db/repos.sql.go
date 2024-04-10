@@ -91,11 +91,21 @@ func (q *Queries) RepoArtifacts(ctx context.Context, repositoryID int64) ([]Repo
 
 const repoCreate = `-- name: RepoCreate :one
 INSERT INTO 
-  repository (remote_id, name, username, description, clone_url, clone_ssh_url, is_fork)
+  repository (
+      remote_id, 
+      name, 
+      username, 
+      description, 
+      html_url, 
+      clone_url, 
+      clone_ssh_url, 
+      is_fork,
+      fork_url
+  )
 VALUES 
-  (?, ?, ?, ?, ?, ?, ?)
+  (?, ?, ?, ?, ?, ?, ?, ?, ?) 
 RETURNING 
-  id, remote_id, name, username, description, clone_url, clone_ssh_url, is_fork
+  id, remote_id, name, username, description, html_url, clone_url, clone_ssh_url, is_fork, fork_url
 `
 
 type RepoCreateParams struct {
@@ -103,9 +113,11 @@ type RepoCreateParams struct {
 	Name        string
 	Username    string
 	Description string
+	HtmlUrl     string
 	CloneUrl    string
 	CloneSshUrl string
 	IsFork      bool
+	ForkUrl     string
 }
 
 func (q *Queries) RepoCreate(ctx context.Context, arg RepoCreateParams) (Repository, error) {
@@ -114,9 +126,11 @@ func (q *Queries) RepoCreate(ctx context.Context, arg RepoCreateParams) (Reposit
 		arg.Name,
 		arg.Username,
 		arg.Description,
+		arg.HtmlUrl,
 		arg.CloneUrl,
 		arg.CloneSshUrl,
 		arg.IsFork,
+		arg.ForkUrl,
 	)
 	var i Repository
 	err := row.Scan(
@@ -125,9 +139,11 @@ func (q *Queries) RepoCreate(ctx context.Context, arg RepoCreateParams) (Reposit
 		&i.Name,
 		&i.Username,
 		&i.Description,
+		&i.HtmlUrl,
 		&i.CloneUrl,
 		&i.CloneSshUrl,
 		&i.IsFork,
+		&i.ForkUrl,
 	)
 	return i, err
 }
@@ -155,18 +171,29 @@ func (q *Queries) RepoUpdateArtifact(ctx context.Context, arg RepoUpdateArtifact
 
 const repoUpsert = `-- name: RepoUpsert :one
 INSERT INTO 
-  repository (remote_id, name, username, description, clone_url, clone_ssh_url, is_fork)  
+  repository (
+      remote_id, 
+      name, 
+      username, 
+      description, 
+      html_url, 
+      clone_url, 
+      clone_ssh_url, 
+      is_fork,
+      fork_url  
+  ) 
 VALUES 
-  (?, ?, ?, ?, ?, ?, ?) 
+  (?, ?, ?, ?, ?, ?, ?, ?, ?) 
 ON CONFLICT (remote_id) 
 DO UPDATE SET 
   name = EXCLUDED.name, 
   username = EXCLUDED.username, 
   description = EXCLUDED.description, 
+  html_url = EXCLUDED.html_url, 
   clone_url = EXCLUDED.clone_url, 
   clone_ssh_url = EXCLUDED.clone_ssh_url, 
-  is_fork = EXCLUDED.is_fork  
-RETURNING id, remote_id, name, username, description, clone_url, clone_ssh_url, is_fork
+  is_fork = EXCLUDED.is_fork
+RETURNING id, remote_id, name, username, description, html_url, clone_url, clone_ssh_url, is_fork, fork_url
 `
 
 type RepoUpsertParams struct {
@@ -174,9 +201,11 @@ type RepoUpsertParams struct {
 	Name        string
 	Username    string
 	Description string
+	HtmlUrl     string
 	CloneUrl    string
 	CloneSshUrl string
 	IsFork      bool
+	ForkUrl     string
 }
 
 func (q *Queries) RepoUpsert(ctx context.Context, arg RepoUpsertParams) (Repository, error) {
@@ -185,9 +214,11 @@ func (q *Queries) RepoUpsert(ctx context.Context, arg RepoUpsertParams) (Reposit
 		arg.Name,
 		arg.Username,
 		arg.Description,
+		arg.HtmlUrl,
 		arg.CloneUrl,
 		arg.CloneSshUrl,
 		arg.IsFork,
+		arg.ForkUrl,
 	)
 	var i Repository
 	err := row.Scan(
@@ -196,9 +227,11 @@ func (q *Queries) RepoUpsert(ctx context.Context, arg RepoUpsertParams) (Reposit
 		&i.Name,
 		&i.Username,
 		&i.Description,
+		&i.HtmlUrl,
 		&i.CloneUrl,
 		&i.CloneSshUrl,
 		&i.IsFork,
+		&i.ForkUrl,
 	)
 	return i, err
 }
@@ -235,7 +268,7 @@ func (q *Queries) RepoUpsertArtifact(ctx context.Context, arg RepoUpsertArtifact
 
 const reposByNameLike = `-- name: ReposByNameLike :many
 SELECT 
-  id, remote_id, name, username, description, clone_url, clone_ssh_url, is_fork 
+  id, remote_id, name, username, description, html_url, clone_url, clone_ssh_url, is_fork, fork_url 
 FROM  
   repository 
 WHERE 
@@ -257,9 +290,11 @@ func (q *Queries) ReposByNameLike(ctx context.Context, name string) ([]Repositor
 			&i.Name,
 			&i.Username,
 			&i.Description,
+			&i.HtmlUrl,
 			&i.CloneUrl,
 			&i.CloneSshUrl,
 			&i.IsFork,
+			&i.ForkUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -276,7 +311,7 @@ func (q *Queries) ReposByNameLike(ctx context.Context, name string) ([]Repositor
 
 const reposByUsernameLike = `-- name: ReposByUsernameLike :many
 SELECT 
-  id, remote_id, name, username, description, clone_url, clone_ssh_url, is_fork 
+  id, remote_id, name, username, description, html_url, clone_url, clone_ssh_url, is_fork, fork_url 
 FROM 
   repository 
 WHERE 
@@ -298,9 +333,11 @@ func (q *Queries) ReposByUsernameLike(ctx context.Context, username string) ([]R
 			&i.Name,
 			&i.Username,
 			&i.Description,
+			&i.HtmlUrl,
 			&i.CloneUrl,
 			&i.CloneSshUrl,
 			&i.IsFork,
+			&i.ForkUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -317,7 +354,7 @@ func (q *Queries) ReposByUsernameLike(ctx context.Context, username string) ([]R
 
 const reposGetAll = `-- name: ReposGetAll :many
 SELECT 
-  id, remote_id, name, username, description, clone_url, clone_ssh_url, is_fork 
+  id, remote_id, name, username, description, html_url, clone_url, clone_ssh_url, is_fork, fork_url 
 FROM  
   repository
 `
@@ -337,9 +374,11 @@ func (q *Queries) ReposGetAll(ctx context.Context) ([]Repository, error) {
 			&i.Name,
 			&i.Username,
 			&i.Description,
+			&i.HtmlUrl,
 			&i.CloneUrl,
 			&i.CloneSshUrl,
 			&i.IsFork,
+			&i.ForkUrl,
 		); err != nil {
 			return nil, err
 		}

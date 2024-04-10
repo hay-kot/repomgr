@@ -10,9 +10,11 @@ type Repository struct {
 	Name        string
 	Username    string
 	Description string
+	HTMLURL     string
 	CloneURL    string
 	CloneSSHURL string
 	IsFork      bool
+	ForkURL string
 }
 
 type RepositoryClient interface {
