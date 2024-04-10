@@ -9,12 +9,14 @@ require (
 	github.com/go-faker/faker/v4 v4.4.1
 	github.com/matryer/is v1.4.1
 	github.com/rs/zerolog v1.31.0
+	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f
 	github.com/sourcegraph/conc v0.3.0
 	github.com/urfave/cli/v2 v2.26.0
 	modernc.org/sqlite v1.29.6
 )
 
 require (
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

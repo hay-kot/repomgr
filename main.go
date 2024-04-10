@@ -53,34 +53,37 @@ func main() {
 		Usage:   "Repository Management TUI/CLI for working with Github Projects",
 		Version: build(),
 		Flags: []cli.Flag{
-			&cli.PathFlag{
+			&cli.StringFlag{
 				Name:    "config",
 				Usage:   "config file",
 				Value:   config.ExpandPath("", "~/.config/repomgr/config.toml"),
 				EnvVars: []string{"REPOMGR_CONFIG"},
-				Action: func(ctx *cli.Context, p cli.Path) error {
-					f, err := os.Open(p)
-					if err != nil {
-						return fmt.Errorf("failed to open config file: %w", err)
-					}
-
-					defer f.Close()
-
-					absolutePath, err := filepath.Abs(p)
-					if err != nil {
-						return err
-					}
-
-					cfg, err = config.New(absolutePath, f)
-					if err != nil {
-						return err
-					}
-
-					return cfg.PrepareDirectories()
-				},
 			},
 		},
 		Before: func(ctx *cli.Context) error {
+			p := ctx.String("config")
+			f, err := os.Open(p)
+			if err != nil {
+				return fmt.Errorf("failed to open config file: %w", err)
+			}
+
+			defer f.Close()
+
+			absolutePath, err := filepath.Abs(p)
+			if err != nil {
+				return err
+			}
+
+			cfg, err = config.New(absolutePath, f)
+			if err != nil {
+				return err
+			}
+
+			err = cfg.PrepareDirectories()
+			if err != nil {
+				return err
+			}
+
 			var writer io.Writer
 
 			logFile := cfg.Logs.File
@@ -131,7 +134,7 @@ func main() {
 			},
 			{
 				Name:  "search",
-				Usage: "  search for repositories",
+				Usage: "search for repositories",
 				Action: func(ctx *cli.Context) error {
 					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
 					if err != nil {
@@ -145,7 +148,13 @@ func main() {
 					}
 
 					ctrl := commands.NewController(cfg, service)
-          return ctrl.Search(appctx)
+					r, err := ctrl.Search(appctx)
+					if err != nil {
+						return err
+					}
+
+          fmt.Println(r.DisplayName())
+          return nil
 				},
 			},
 			{
@@ -205,7 +214,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Err(err).Msg("app.Run")
 		cons.UnknownError("An unexpected error occurred", err)
 		os.Exit(1)
 	}

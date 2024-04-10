@@ -13,12 +13,12 @@ import (
 )
 
 type Config struct {
-	ProjectDir  string      `toml:"project_dir"`
-	KeyBindings KeyBindings `toml:"key_bindings"`
-	Concurrency int         `toml:"concurrency"`
-	Sources     []Source    `toml:"sources"`
-	Database    Database    `toml:"database"`
-	Logs        Logs        `toml:"logs"`
+	KeyBindings      KeyBindings      `toml:"key_bindings"`
+	Concurrency      int              `toml:"concurrency"`
+	Sources          []Source         `toml:"sources"`
+	Database         Database         `toml:"database"`
+	Logs             Logs             `toml:"logs"`
+	CloneDirectories CloneDirectories `toml:"clone_directories"`
 }
 
 func New(confpath string, reader io.Reader) (*Config, error) {
@@ -44,16 +44,21 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 		return nil, err
 	}
 
-	cfg.ProjectDir = ExpandPath(confpath, cfg.ProjectDir)
 	cfg.Database.File = ExpandPath(confpath, cfg.Database.File)
 	cfg.Logs.File = ExpandPath(confpath, cfg.Logs.File)
+
+	cfg.CloneDirectories.Default = ExpandPath(confpath, cfg.CloneDirectories.Default)
+	for i := range cfg.CloneDirectories.Matchers {
+		cfg.CloneDirectories.
+			Matchers[i].
+			Directory = ExpandPath(confpath, cfg.CloneDirectories.Matchers[i].Directory)
+	}
 
 	return &cfg, nil
 }
 
 func (c Config) PrepareDirectories() error {
 	dirs := []string{
-		c.ProjectDir,
 		filepath.Dir(c.Database.File),
 		filepath.Dir(c.Logs.File),
 	}
@@ -76,13 +81,10 @@ func (c Config) Validate() error {
 		return fmt.Errorf("sources are required")
 	}
 
-	if c.ProjectDir == "" {
-		return fmt.Errorf("project_dir is required")
-	}
-
 	validators := []validator{
 		c.KeyBindings,
 		c.Database,
+    c.CloneDirectories,
 	}
 
 	for _, source := range c.Sources {
