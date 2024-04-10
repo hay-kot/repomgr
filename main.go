@@ -130,6 +130,25 @@ func main() {
 				},
 			},
 			{
+				Name:  "search",
+				Usage: "  search for repositories",
+				Action: func(ctx *cli.Context) error {
+					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+
+					defer sqldb.Close()
+					service, err := services.NewRepositoryService(sqldb)
+					if err != nil {
+						return err
+					}
+
+					ctrl := commands.NewController(cfg, service)
+          return ctrl.Search(appctx)
+				},
+			},
+			{
 				Name:   "dev",
 				Hidden: true,
 				Subcommands: []*cli.Command{

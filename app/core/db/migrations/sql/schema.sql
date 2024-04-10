@@ -1,4 +1,4 @@
-CREATE TABLE repository (
+CREATE TABLE IF NOT EXISTS repository (
   id            INTEGER PRIMARY KEY,
   remote_id     TEXT NOT NULL UNIQUE,
   name          TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE repository (
   fork_url      TEXT NOT NULL
 );
 
-CREATE TABLE repository_artifact (
+CREATE TABLE IF NOT EXISTS repository_artifact (
   id            INTEGER PRIMARY KEY,
   data_type     TEXT    NOT NULL,
   data          BLOB    NOT NULL,
