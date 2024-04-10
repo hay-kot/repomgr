@@ -1,4 +1,13 @@
-project_dir = "./.temp/projects"
+[clone_directories]
+# default directory for cloing if no matchers are found
+default = "~/src/github.com/{{ .Owner   }}/{{ .Name }}"
+# matchers are checked in order, first match is used.
+# supports glob style matches
+matchers = [
+  { match = "business/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
+  { match = "mealie-recipes/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
+]
+
 
 [logs]
 file = "./.temp/repomgr.log"
@@ -12,7 +21,7 @@ params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
 [[sources]]
 type = "github"
 username = "hay-kot"
-organizations = []
+organizations = ["mealie-recipes"]
 # token properties have special syntax for environment variables
 token = "env:REPOMGR_GH_TOKEN"
 
