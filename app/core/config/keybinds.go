@@ -26,8 +26,8 @@ func (k KeyCommand) String() string {
 
 func (k KeyCommand) IsValid() error {
 	str := string(k)
-	if strings.HasPrefix("::", str) {
-		validoptions := []string{"::open", "::clone", "::shell"}
+	if strings.HasPrefix(":", str) {
+		validoptions := []string{":GitClone", ":GitPull", ":Exit"}
 
 		// check if it's a valid option
 		var found bool
