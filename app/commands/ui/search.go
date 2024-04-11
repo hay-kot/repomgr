@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -168,7 +169,7 @@ func (m SearchView) View() string {
 	str := strings.Builder{}
 
 	// Calculate the number of allowed_rows we can display
-	m.ctrl.limit = m.height - 3
+	m.ctrl.limit = m.height - 8
 
 	var determinedMax int
 	if m.ctrl.limit < 0 {
@@ -188,7 +189,33 @@ func (m SearchView) View() string {
 	str.WriteString(m.search.View())
 	str.WriteString(styles.Subtle(fmt.Sprintf("\n  %d/%d", len(results), len(m.ctrl.repos))) + "\n")
 	str.WriteString(m.fmtMatches(results[:determinedMax]))
+
+	// fill remaining height - 1
+	for i := 0; i < m.height-determinedMax-3; i++ {
+		str.WriteString("\n")
+	}
+
+	str.WriteString(m.keyHelp())
 	return str.String()
+}
+
+func (m SearchView) keyHelp() string {
+	keys := make([]string, 0, len(m.ctrl.keybinds))
+	for key, cmd := range m.ctrl.keybinds {
+		keys = append(keys, fmt.Sprintf("%s: %s", key, cmd.Description))
+	}
+	slices.Sort(keys)
+
+	bldr := strings.Builder{}
+	for i, key := range keys {
+		bldr.WriteString(styles.Subtle(" " + key))
+		if i < len(keys)-1 {
+			bldr.WriteString(" ")
+			bldr.WriteString(styles.Subtle(icons.Dot))
+		}
+	}
+
+	return bldr.String()
 }
 
 func (m SearchView) fmtMatches(repos []repos.Repository) string {

@@ -8,4 +8,5 @@ const (
 	Branch = "\U000f062d" // 󰘭
 	Folder = ""
 	Stop   = "■"
+	Dot    = "•"
 )

@@ -99,10 +99,14 @@ func main() {
 
 			// TODO: remove color from logs in prod, but keep it in dev
 			// for nice tail output
-			log.Logger = log.Output(zerolog.ConsoleWriter{
-				Out:     writer,
-				NoColor: !cfg.Logs.Color,
-			})
+			if cfg.Logs.Format == "text" {
+				log.Logger = log.Output(zerolog.ConsoleWriter{
+					Out:     writer,
+					NoColor: !cfg.Logs.Color,
+				})
+			} else if cfg.Logs.Format == "json" {
+				log.Logger = log.Output(writer)
+			}
 
 			zerolog.SetGlobalLevel(cfg.Logs.Level)
 			log.Debug().Str("config", absolutePath).Msg("loaded config")

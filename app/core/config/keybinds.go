@@ -29,28 +29,30 @@ func (k KeyBindings) Validate() error {
 	return nil
 }
 
-type KeyCommand string
+type KeyCommand struct {
+	Cmd         string `toml:"cmd"`
+	Description string `toml:"desc"`
+}
 
 func (k KeyCommand) String() string {
-	return string(k)
+	return string(k.Cmd)
 }
 
 func (k KeyCommand) IsValid() error {
-	str := string(k)
-	if strings.HasPrefix(":", str) {
+	if strings.HasPrefix(":", k.Cmd) {
 		validoptions := []string{":GitClone", ":GitPull", ":Exit"}
 
 		// check if it's a valid option
 		var found bool
 		for _, option := range validoptions {
-			if option == str {
+			if option == k.Cmd {
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			return fmt.Errorf("invalid command '%s'", str)
+			return fmt.Errorf("invalid command '%s'", k.Cmd)
 		}
 
 		return nil

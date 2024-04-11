@@ -84,7 +84,7 @@ func (c Config) Validate() error {
 	validators := []validator{
 		c.KeyBindings,
 		c.Database,
-    c.CloneDirectories,
+		c.CloneDirectories,
 	}
 
 	for _, source := range c.Sources {
@@ -108,9 +108,10 @@ func (c Config) Dump() (string, error) {
 }
 
 type Logs struct {
-	Level zerolog.Level `toml:"level"`
-	File  string        `toml:"file"`
-	Color bool          `toml:"color"`
+	Level  zerolog.Level `toml:"level"`
+	File   string        `toml:"file"`
+	Color  bool          `toml:"color"`
+	Format string        `toml:"format"`
 }
 
 type Database struct {

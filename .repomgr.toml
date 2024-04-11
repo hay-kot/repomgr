@@ -17,7 +17,8 @@ matchers = [
 [logs]
 file = "./.temp/repomgr.log"
 level = "debug"
-color = true
+color = true                 # ignored if json
+format = "text"              # text or json
 
 [database]
 file = "./.temp/repomgr.db"
@@ -31,13 +32,6 @@ organizations = ["mealie-recipes"]
 token = "env:REPOMGR_GH_TOKEN"
 
 [key_bindings]
-# if not ::<cmd> then it's a shell command to be executed
-# go-templates are supported
-"ctrl-o" = "open {{ .Repo.HTMLURL }}"
-# clones the repository in the project_dir
-"ctrl-g" = ":GitClone"
-# pulls the project in the directory, if not already present
-# clone as well
-"ctrl-p" = ":GitPull"
-# exits the program and prints only the clone URL
-"enter" = ":Exit {{ .CloneURL }}"
+"ctrl-o" = { cmd = "open {{ .Repo.HTMLURL }}", desc = "open url" }
+"ctrl-g" = { cmd = ":GitClone", desc = "clone" }
+"enter" = { cmd = ":Exit {{ .CloneURL }}", desc = "exit with clone url" }

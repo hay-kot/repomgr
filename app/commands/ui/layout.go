@@ -1,11 +1,14 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 var _ tea.Model = &Layout{}
 
 type Layout struct {
-	Body tea.Model
+	Body   tea.Model
+	Footer *Footer
 }
 
 func NewLayout(body tea.Model) *Layout {
