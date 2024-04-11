@@ -55,12 +55,12 @@ func Test_CommandService_Run(t *testing.T) {
 		{
 			name:  "app command :GitClone",
 			input: ":GitClone",
-			want:  "git clone " + repo.CloneURL + " /tmp/" + repo.DisplayName(),
+			want:  "git clone '" + repo.CloneSSHURL + "' '/tmp/" + repo.DisplayName() + "'",
 		},
 		{
 			name:  "app command :GitPull",
 			input: ":GitPull",
-			want:  "git pull /tmp/" + repo.DisplayName(),
+			want:  "git pull '/tmp/" + repo.DisplayName() + "'",
 		},
 	}
 
