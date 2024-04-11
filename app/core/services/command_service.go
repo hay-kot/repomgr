@@ -20,7 +20,9 @@ type ShellExecutor struct{}
 
 func (e ShellExecutor) Execute(cmd string, args ...string) error {
 	log.Debug().Str("cmd", cmd).Strs("args", args).Msg("executing command")
-	return exec.Command("zsh", "-c", cmd + " " + strings.Join(args, " ")).Run()
+	err := exec.Command("bash", "-c", cmd+" "+strings.Join(args, " ")).Run()
+	log.Debug().Err(err).Msg("command executed")
+	return err
 }
 
 type CommandService struct {

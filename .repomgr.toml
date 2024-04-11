@@ -1,3 +1,5 @@
+shell = "bash"
+
 [clone_directories]
 # default directory for cloing if no matchers are found
 default = "./.temp/projects/{{ .Repo.Name }}"
