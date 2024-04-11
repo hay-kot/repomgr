@@ -120,8 +120,6 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
-		case tea.KeyEnter:
-			return m, tea.Quit
 		}
 
 		switch msg.String() {

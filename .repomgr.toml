@@ -1,3 +1,6 @@
+# when running a command arguments are passed to the shell
+# via the -c flag. I haven't been able to get it to work without
+# a shell, so this the implementation is a bit hacky  
 shell = "bash"
 
 [clone_directories]
