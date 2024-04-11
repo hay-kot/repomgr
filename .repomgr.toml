@@ -1,6 +1,6 @@
 [clone_directories]
 # default directory for cloing if no matchers are found
-default = "~/src/github.com/{{ .Owner }}/{{ .Name }}"
+default = "./.temp/projects/{{ .Repo.Name }}"
 # matchers are checked in order, first match is used.
 # supports glob style matches
 matchers = [
@@ -28,11 +28,11 @@ token = "env:REPOMGR_GH_TOKEN"
 [key_bindings]
 # if not ::<cmd> then it's a shell command to be executed
 # go-templates are supported
-"ctrl-o" = ["open", "{{ .Repo.HTMLURL }}"]
+"ctrl-o" = "open {{ .Repo.HTMLURL }}"
 # clones the repository in the project_dir
-"ctrl-g" = [":GitClone"]
+"ctrl-g" = ":GitClone"
 # pulls the project in the directory, if not already present
 # clone as well
-"ctrl-p" = [":GitPull"]
+"ctrl-p" = ":GitPull"
 # exits the program and prints only the clone URL
-"enter" = [":Exit {{ .CloneURL }}"]
+"enter" = ":Exit {{ .CloneURL }}"

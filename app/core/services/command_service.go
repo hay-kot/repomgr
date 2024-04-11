@@ -20,7 +20,7 @@ type ShellExecutor struct{}
 
 func (e ShellExecutor) Execute(cmd string, args ...string) error {
 	log.Debug().Str("cmd", cmd).Strs("args", args).Msg("executing command")
-	return exec.Command(cmd, args...).Run()
+	return exec.Command("zsh", "-c", cmd + " " + strings.Join(args, " ")).Run()
 }
 
 type CommandService struct {
@@ -116,29 +116,29 @@ func (s *CommandService) prepareCommand(repo repos.Repository, command string) (
 		// special command
 		switch AppCommand(command) {
 		case AppCommandClone:
-			command = "git clone {{ .Repo.CloneSSHURL }} {{ .CloneDir }}"
+			command = "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'"
 		case AppCommandFork:
 			// TODO implement fork command
 			panic("not implemented")
 		case AppCommandPull:
-			command = "git pull {{ .CloneDir }}"
+			command = "git pull '{{ .CloneDir }}'"
 		default:
 			return "", nil, fmt.Errorf("unknown command: '%s'", command)
 		}
 	}
 
 	command, err := s.renderCommandTemplate(repo, command)
+	log.Debug().Str("command", command).Msg("rendered command")
 	if err != nil {
 		return "", nil, err
 	}
 
-	args := strings.Split(command, " ")
+	args := splitWithQuotes(command)
 	if len(args) == 0 {
 		return "", nil, fmt.Errorf("empty command")
 	}
 
 	cmd, args := args[0], args[1:]
-
 	return cmd, args, nil
 }
 
@@ -149,4 +149,31 @@ func (s *CommandService) Run(repo repos.Repository, command string) error {
 	}
 
 	return s.exec.Execute(cmd, args...)
+}
+
+func splitWithQuotes(input string) []string {
+	var parts []string
+	var currentPart strings.Builder
+	insideQuotes := false
+
+	for _, char := range input {
+		if char == '\'' {
+			insideQuotes = !insideQuotes
+		} else if char == ' ' && !insideQuotes {
+			// If it's a space and we're not inside quotes,
+			// we consider it as a separator between parts.
+			parts = append(parts, currentPart.String())
+			currentPart.Reset()
+			continue
+		}
+		// Append the character to the current part.
+		currentPart.WriteRune(char)
+	}
+
+	// Append the last part after the loop.
+	if currentPart.Len() > 0 {
+		parts = append(parts, currentPart.String())
+	}
+
+	return parts
 }
