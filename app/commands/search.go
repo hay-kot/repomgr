@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hay-kot/repomgr/app/commands/ui"
+	"github.com/hay-kot/repomgr/app/core/services"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
@@ -15,8 +16,9 @@ func (ctrl *Controller) Search(ctx context.Context) (repos.Repository, error) {
 	}
 
 	var (
+		cmdService = services.NewCommandService(ctrl.conf.CloneDirectories, ctrl.conf.KeyBindings, services.ShellExecutor{})
 		searchCtrl = ui.NewSearchCtrl(ctrl.conf.KeyBindings, r)
-		search     = ui.NewSearchView(searchCtrl)
+		search     = ui.NewSearchView(searchCtrl, cmdService)
 		layout     = ui.NewLayout(search)
 	)
 

@@ -104,12 +104,8 @@ func main() {
 				NoColor: !cfg.Logs.Color,
 			})
 
-			level, err := zerolog.ParseLevel(ctx.String("log-level"))
-			if err != nil {
-				return err
-			}
-
-			zerolog.SetGlobalLevel(level)
+			zerolog.SetGlobalLevel(cfg.Logs.Level)
+			log.Debug().Str("config", absolutePath).Msg("loaded config")
 			return nil
 		},
 		Commands: []*cli.Command{
@@ -153,8 +149,8 @@ func main() {
 						return err
 					}
 
-          fmt.Println(r.DisplayName())
-          return nil
+					fmt.Println(r.DisplayName())
+					return nil
 				},
 			},
 			{

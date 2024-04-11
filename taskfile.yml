@@ -1,8 +1,7 @@
 version: "3"
 
 env:
-  REPOMGR_LOG_LEVEL: "debug"
-  REPOMGR_LOG_FILE: "repomgr.dev.log"
+  REPOMGR_LOG_FILE: "./.temp/repomgr.log"
   REPOMGR_CONFIG: "./.repomgr.toml"
 
 dotenv:

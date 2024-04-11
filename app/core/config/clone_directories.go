@@ -10,6 +10,16 @@ type CloneDirectories struct {
 	Matchers []Matcher `toml:"matchers"`
 }
 
+func (c CloneDirectories) FindMatch(str string) string {
+	for _, matcher := range c.Matchers {
+		if matcher.IsMatch(str) {
+			return matcher.Directory
+		}
+	}
+
+	return c.Default
+}
+
 type Matcher struct {
 	Match     string `toml:"match"`
 	Directory string `toml:"dir"`
@@ -31,9 +41,9 @@ func (c CloneDirectories) Validate() error {
 		}
 
 		_, err := filepath.Match(matcher.Match, "")
-    if err != nil { 
-      return fmt.Errorf("invalid match pattern for clone directory matcher %d: %w", i, err) 
-    }
+		if err != nil {
+			return fmt.Errorf("invalid match pattern for clone directory matcher %d: %w", i, err)
+		}
 
 		if matcher.Directory == "" {
 			return fmt.Errorf("directory is required for clone directory matcher %d", i)

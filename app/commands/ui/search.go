@@ -7,9 +7,11 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/services"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/hay-kot/repomgr/internal/icons"
 	"github.com/hay-kot/repomgr/internal/styles"
+	"github.com/rs/zerolog/log"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -84,12 +86,13 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 
 type SearchView struct {
 	ctrl   *SearchCtrl
+	cmd    *services.CommandService
 	search textinput.Model
 	height int
 	shift  int
 }
 
-func NewSearchView(ctrl *SearchCtrl) SearchView {
+func NewSearchView(ctrl *SearchCtrl, service *services.CommandService) SearchView {
 	ti := textinput.New()
 	ti.Focus()
 	ti.Prompt = styles.AccentBlue("> ")
@@ -97,8 +100,9 @@ func NewSearchView(ctrl *SearchCtrl) SearchView {
 	ti.Width = 80
 
 	return SearchView{
-		search: ti,
 		ctrl:   ctrl,
+		cmd:    service,
+		search: ti,
 	}
 }
 
@@ -137,10 +141,27 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.shift++
 				}
 			}
+		default:
+			ok, cmd := m.cmd.GetBoundCommand(msg.Type)
+			if !ok {
+				break
+			}
+
+			err := m.cmd.Run(m.ctrl.Selected(), cmd)
+			if err != nil {
+				log.Err(err).Msg("failed to run command")
+				return m, tea.Quit
+			}
 		}
 	}
 
+	old := m.search
+
 	m.search, cmd = m.search.Update(msg)
+	if old.Value() != m.search.Value() {
+		m.ctrl.selected = 0
+	}
+
 	return m, cmd
 }
 

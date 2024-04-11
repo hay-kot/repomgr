@@ -28,11 +28,11 @@ token = "env:REPOMGR_GH_TOKEN"
 [key_bindings]
 # if not ::<cmd> then it's a shell command to be executed
 # go-templates are supported
-"o" = "open {{ .CloneURL }}"
+"ctrl-o" = ["open", "{{ .Repo.HTMLURL }}"]
 # clones the repository in the project_dir
-"c" = ":GitClone"
+"ctrl-g" = [":GitClone"]
 # pulls the project in the directory, if not already present
 # clone as well
-"p" = ":GitPull"
+"ctrl-p" = [":GitPull"]
 # exits the program and prints only the clone URL
-"enter" = ":Exit {{ .CloneURL }}"
+"enter" = [":Exit {{ .CloneURL }}"]

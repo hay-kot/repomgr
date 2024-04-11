@@ -8,10 +8,21 @@ import (
 type KeyBindings map[string]KeyCommand
 
 func (k KeyBindings) Validate() error {
+	reserved := []string{
+		"ctrl-c",
+		"ctrl-m",
+	}
+
 	for key, cmd := range k {
 		err := cmd.IsValid()
 		if err != nil {
 			return fmt.Errorf("invalid command for key %s: %w", key, err)
+		}
+
+		for _, r := range reserved {
+			if key == r {
+				return fmt.Errorf("key '%s' is reserved", key)
+			}
 		}
 	}
 
