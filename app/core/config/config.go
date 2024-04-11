@@ -13,8 +13,9 @@ import (
 )
 
 type Config struct {
-	KeyBindings      KeyBindings      `toml:"key_bindings"`
 	Concurrency      int              `toml:"concurrency"`
+	Shell            string           `toml:"shell"`
+	KeyBindings      KeyBindings      `toml:"key_bindings"`
 	Sources          []Source         `toml:"sources"`
 	Database         Database         `toml:"database"`
 	Logs             Logs             `toml:"logs"`

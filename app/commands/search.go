@@ -16,7 +16,8 @@ func (ctrl *Controller) Search(ctx context.Context) (repos.Repository, error) {
 	}
 
 	var (
-		cmdService = services.NewCommandService(ctrl.conf.CloneDirectories, ctrl.conf.KeyBindings, services.ShellExecutor{})
+		exec       = services.NewShellExecutor(ctrl.conf.Shell)
+		cmdService = services.NewCommandService(ctrl.conf.CloneDirectories, ctrl.conf.KeyBindings, exec)
 		searchCtrl = ui.NewSearchCtrl(ctrl.conf.KeyBindings, r)
 		search     = ui.NewSearchView(searchCtrl, cmdService)
 		layout     = ui.NewLayout(search)

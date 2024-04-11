@@ -16,7 +16,13 @@ type Executor interface {
 	Execute(cmd string, args ...string) error
 }
 
-type ShellExecutor struct{}
+type ShellExecutor struct {
+	shell string
+}
+
+func NewShellExecutor(shell string) ShellExecutor {
+	return ShellExecutor{shell: shell}
+}
 
 func (e ShellExecutor) Execute(cmd string, args ...string) error {
 	log.Debug().Str("cmd", cmd).Strs("args", args).Msg("executing command")
