@@ -32,6 +32,4 @@ organizations = ["mealie-recipes"]
 token = "env:REPOMGR_GH_TOKEN"
 
 [key_bindings]
-"ctrl-o" = { cmd = "open {{ .Repo.HTMLURL }}", desc = "open url" }
-"ctrl-g" = { cmd = ":GitClone", desc = "clone" }
-"enter" = { cmd = ":Exit {{ .CloneURL }}", desc = "exit with clone url" }
+"ctrl-f" = { cmd = "finder {{ .CloneDir }}", desc = "open cloned folder" }

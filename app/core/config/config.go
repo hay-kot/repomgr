@@ -33,6 +33,20 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 			File:   "~/config/repomgr/repos.db",
 			Params: "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1",
 		},
+		KeyBindings: KeyBindings{
+			"ctrl-o": KeyCommand{
+				Cmd:  "open {{ .Repo.HTMLURL }}",
+				Desc: "open url",
+			},
+			"ctrl-g": KeyCommand{
+				Cmd:  "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'",
+				Desc: "clone repo",
+			},
+			"enter": KeyCommand{
+				Cmd:  ":Exit {{ .CloneDir }}",
+				Desc: "exit with clone directory path",
+			},
+		},
 	}
 
 	_, err := toml.NewDecoder(reader).Decode(&cfg)

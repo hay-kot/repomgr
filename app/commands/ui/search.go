@@ -202,7 +202,7 @@ func (m SearchView) View() string {
 func (m SearchView) keyHelp() string {
 	keys := make([]string, 0, len(m.ctrl.keybinds))
 	for key, cmd := range m.ctrl.keybinds {
-		keys = append(keys, fmt.Sprintf("%s: %s", key, cmd.Description))
+		keys = append(keys, fmt.Sprintf("%s: %s", key, cmd.Desc))
 	}
 	slices.Sort(keys)
 

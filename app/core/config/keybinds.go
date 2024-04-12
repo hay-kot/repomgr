@@ -31,7 +31,7 @@ func (k KeyBindings) Validate() error {
 
 type KeyCommand struct {
 	Cmd         string `toml:"cmd"`
-	Description string `toml:"desc"`
+	Desc string `toml:"desc"`
 }
 
 func (k KeyCommand) String() string {
