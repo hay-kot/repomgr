@@ -18,6 +18,7 @@ import (
 
 // SearchCtrl is the controller/model for the fuzzer finding UI component
 type SearchCtrl struct {
+	rs           *services.RepositoryService
 	index        []string
 	repos        []repos.Repository
 	searchLength int
@@ -29,8 +30,13 @@ type SearchCtrl struct {
 	keybinds config.KeyBindings
 }
 
-func NewSearchCtrl(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
+func NewSearchCtrl(
+	rs *services.RepositoryService,
+	bindings config.KeyBindings,
+	r []repos.Repository,
+) *SearchCtrl {
 	return &SearchCtrl{
+		rs:       rs,
 		repos:    r,
 		keybinds: bindings,
 	}
@@ -240,7 +246,13 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 		)
 
 		if repo.IsFork {
-			iconPrefix += styles.Subtle(icons.Fork)
+			iconPrefix += styles.Subtle(icons.Fork) + " "
+		} else {
+			iconPrefix += "  " // double width icon
+		}
+
+		if m.ctrl.rs.IsCloned(repo) {
+			iconPrefix += styles.Subtle(icons.Folder) + " "
 		} else {
 			iconPrefix += " "
 		}

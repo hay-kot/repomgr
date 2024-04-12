@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sync"
 
+	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/db"
 	"github.com/hay-kot/repomgr/app/core/db/migrations"
 	"github.com/hay-kot/repomgr/app/repos"
@@ -21,20 +23,48 @@ const (
 )
 
 type RepositoryService struct {
-	sql *sql.DB
-	db  *db.Queries
+	sql         *sql.DB
+	db          *db.Queries
+	mu          sync.RWMutex
+	clonedrepos map[string]bool
 }
 
-func NewRepositoryService(s *sql.DB) (*RepositoryService, error) {
+func NewRepositoryService(s *sql.DB, b *bus.EventBus) (*RepositoryService, error) {
 	_, err := s.Exec(migrations.Schema)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RepositoryService{
-		sql: s,
-		db:  db.New(s),
-	}, nil
+	rs := &RepositoryService{
+		sql:         s,
+		db:          db.New(s),
+		clonedrepos: make(map[string]bool),
+	}
+
+	b.SubCloneEvent(func(rce bus.RepoClonedEvent) {
+		rs.SetCloned(rce.Repo, true)
+	})
+
+	return rs, nil
+}
+
+func (s *RepositoryService) SetCloned(repo repos.Repository, v bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.clonedrepos[repo.CloneURL] = v
+}
+
+func (s *RepositoryService) IsCloned(repo repos.Repository) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	v, ok := s.clonedrepos[repo.CloneURL]
+	if !ok {
+		return false
+	}
+
+	return v
 }
 
 func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, error) {

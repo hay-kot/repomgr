@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -18,10 +15,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
-	"github.com/hay-kot/repomgr/app/commands/ui"
 	"github.com/hay-kot/repomgr/app/console"
 	"github.com/hay-kot/repomgr/app/core/config"
-	"github.com/hay-kot/repomgr/app/core/services"
 )
 
 var (
@@ -97,8 +92,6 @@ func main() {
 				writer = f
 			}
 
-			// TODO: remove color from logs in prod, but keep it in dev
-			// for nice tail output
 			if cfg.Logs.Format == "text" {
 				log.Logger = log.Output(zerolog.ConsoleWriter{
 					Out:     writer,
@@ -117,18 +110,10 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					ctrl, err := commands.NewController(cfg)
 					if err != nil {
 						return err
 					}
-
-					defer sqldb.Close()
-					service, err := services.NewRepositoryService(sqldb)
-					if err != nil {
-						return err
-					}
-
-					ctrl := commands.NewController(cfg, service)
 					return ctrl.Cache(appctx)
 				},
 			},
@@ -136,24 +121,16 @@ func main() {
 				Name:  "search",
 				Usage: "search for repositories",
 				Action: func(ctx *cli.Context) error {
-					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					ctrl, err := commands.NewController(cfg)
 					if err != nil {
 						return err
 					}
 
-					defer sqldb.Close()
-					service, err := services.NewRepositoryService(sqldb)
+					_, err = ctrl.Search(appctx)
 					if err != nil {
 						return err
 					}
 
-					ctrl := commands.NewController(cfg, service)
-					r, err := ctrl.Search(appctx)
-					if err != nil {
-						return err
-					}
-
-					fmt.Println(r.DisplayName())
 					return nil
 				},
 			},
@@ -172,27 +149,6 @@ func main() {
 
 							fmt.Println(cfgstr)
 							return nil
-						},
-					},
-					{
-						Name:  "spinner",
-						Usage: "test spinner",
-						Action: func(ctx *cli.Context) error {
-							return ui.NewSpinnerFunc("loading...", func(ch chan<- string) error {
-								for i := 0; i < 10; i++ {
-									ch <- fmt.Sprintf("loading... %d", i)
-									time.Sleep(300 * time.Millisecond)
-								}
-
-								return nil
-							})
-						},
-					},
-					{
-						Name:  "error",
-						Usage: "test/dump console outputs",
-						Action: func(ctx *cli.Context) error {
-							return errors.New("failed to run config file")
 						},
 					},
 					{

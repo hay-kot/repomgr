@@ -12,7 +12,7 @@ import (
 )
 
 func (ctrl *Controller) Cache(ctx context.Context) error {
-	return ui.NewSpinnerFunc("Cacheing Repositories...", func(msgch chan<- string) error {
+	return ui.NewSpinnerFunc("cacheing repositories...", func(msgch chan<- string) error {
 		wg := pool.New().
 			WithMaxGoroutines(ctrl.conf.Concurrency).
 			WithErrors().
@@ -21,7 +21,7 @@ func (ctrl *Controller) Cache(ctx context.Context) error {
 		total := 0
 		appendTotal := func(v int) {
 			total += v
-			msgch <- fmt.Sprintf("Total repositories: %d", total)
+			msgch <- fmt.Sprintf("total repositories: %d", total)
 		}
 
 		collectionch := make(chan []repos.Repository, 1)
@@ -62,8 +62,9 @@ func (ctrl *Controller) Cache(ctx context.Context) error {
 		close(collectionch)
 		colwg.Wait()
 
-		msgch <- fmt.Sprintf("Total repositories: %d", len(items))
-		msgch <- "Saving repositories to database..."
+		msgch <- fmt.Sprintf("total repositories: %d", len(items))
+		msgch <- "saving repositories to database..."
+		msgch <- fmt.Sprintf("total cached: %d", len(items))
 
 		return ctrl.repos.UpsertMany(ctx, items)
 	})
@@ -81,7 +82,6 @@ func (ctrl *Controller) client(t config.SourceType, token string) (repos.Reposit
 	default:
 		return nil, fmt.Errorf("unsupported repository source type: %s", t)
 	}
-
 
 	ctrl.cc.set(t, token, client)
 	return client, nil

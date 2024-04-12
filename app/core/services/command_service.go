@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/config"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/rs/zerolog/log"
@@ -35,17 +36,20 @@ type CommandService struct {
 	dirs config.CloneDirectories
 	keys config.KeyBindings
 	exec Executor
+	bus  *bus.EventBus
 }
 
 func NewCommandService(
 	dirs config.CloneDirectories,
 	keys config.KeyBindings,
 	e Executor,
+	b *bus.EventBus,
 ) *CommandService {
 	return &CommandService{
 		dirs: dirs,
 		keys: keys,
 		exec: e,
+		bus:  b,
 	}
 }
 
@@ -123,13 +127,9 @@ func (s *CommandService) prepareCommand(repo repos.Repository, command string) (
 	if strings.HasPrefix(command, ":") {
 		// special command
 		switch AppCommand(command) {
-		case AppCommandClone:
-			command = "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'"
 		case AppCommandFork:
 			// TODO implement fork command
 			panic("not implemented")
-		case AppCommandPull:
-			command = "git pull '{{ .CloneDir }}'"
 		default:
 			return "", nil, fmt.Errorf("unknown command: '%s'", command)
 		}
@@ -156,7 +156,22 @@ func (s *CommandService) Run(repo repos.Repository, command string) error {
 		return err
 	}
 
-	return s.exec.Execute(cmd, args...)
+	err = s.exec.Execute(cmd, args...)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(command, "git clone") {
+		log.Debug().Str("repo", repo.DisplayName()).Msg("emitting clone event")
+		cloneDir, err := s.findCloneDirectory(repo)
+		if err != nil {
+			return err
+		}
+
+		s.bus.PubCloneEvent(repo, cloneDir)
+	}
+
+	return nil
 }
 
 func splitWithQuotes(input string) []string {

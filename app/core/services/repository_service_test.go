@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-faker/faker/v4"
+	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/matryer/is"
 	_ "modernc.org/sqlite"
@@ -18,7 +19,9 @@ func tServiceFactory(t *testing.T) *RepositoryService {
 		t.Fatal(err)
 	}
 
-	service, err := NewRepositoryService(db)
+	b := bus.NewEventBus(10)
+
+	service, err := NewRepositoryService(db, b)
 	if err != nil {
 		t.Fatal(err)
 	}

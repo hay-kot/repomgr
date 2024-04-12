@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/config"
 	"github.com/matryer/is"
 )
@@ -44,7 +45,9 @@ func Test_CommandService_Run(t *testing.T) {
 		Matchers: []config.Matcher{},
 	}
 
-	s := NewCommandService(dirs, nil, e)
+	bus := bus.NewEventBus(10)
+
+	s := NewCommandService(dirs, nil, e, bus)
 
 	tcases := []tcase{
 		{
