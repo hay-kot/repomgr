@@ -70,7 +70,7 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 	if c.index == nil {
 		c.index = make([]string, len(c.repos))
 		for i, repo := range c.repos {
-			c.index[i] = repo.Name
+			c.index[i] = repo.DisplayName()
 		}
 	}
 

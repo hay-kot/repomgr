@@ -82,6 +82,7 @@ func (ctrl *Controller) client(t config.SourceType, token string) (repos.Reposit
 		return nil, fmt.Errorf("unsupported repository source type: %s", t)
 	}
 
+
 	ctrl.cc.set(t, token, client)
 	return client, nil
 }

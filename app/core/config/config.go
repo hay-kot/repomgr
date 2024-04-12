@@ -38,7 +38,7 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 				Cmd:  "open {{ .Repo.HTMLURL }}",
 				Desc: "open url",
 			},
-			"ctrl-g": KeyCommand{
+			"ctrl-p": KeyCommand{
 				Cmd:  "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'",
 				Desc: "clone repo",
 			},

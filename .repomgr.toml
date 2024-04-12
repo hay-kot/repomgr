@@ -27,9 +27,7 @@ params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
 [[sources]]
 type = "github"
 username = "hay-kot"
-organizations = ["mealie-recipes"]
-# token properties have special syntax for environment variables
 token = "env:REPOMGR_GH_TOKEN"
 
 [key_bindings]
-"ctrl-f" = { cmd = "finder {{ .CloneDir }}", desc = "open cloned folder" }
+"ctrl-f" = { cmd = "open '{{ .CloneDir }}'", desc = "open cloned folder" }
