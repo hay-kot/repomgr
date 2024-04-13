@@ -56,9 +56,7 @@ func NewCommandService(
 type AppCommand string
 
 const (
-	AppCommandClone AppCommand = ":GitClone"
-	AppCommandFork  AppCommand = ":GitFork"
-	AppCommandPull  AppCommand = ":GitPull"
+	AppCommandFork AppCommand = ":GitFork"
 )
 
 func (s *CommandService) GetBoundCommand(cmd tea.KeyType) (bool, string) {
@@ -172,31 +170,4 @@ func (s *CommandService) Run(repo repos.Repository, command string) error {
 	}
 
 	return nil
-}
-
-func splitWithQuotes(input string) []string {
-	var parts []string
-	var currentPart strings.Builder
-	insideQuotes := false
-
-	for _, char := range input {
-		if char == '\'' {
-			insideQuotes = !insideQuotes
-		} else if char == ' ' && !insideQuotes {
-			// If it's a space and we're not inside quotes,
-			// we consider it as a separator between parts.
-			parts = append(parts, currentPart.String())
-			currentPart.Reset()
-			continue
-		}
-		// Append the character to the current part.
-		currentPart.WriteRune(char)
-	}
-
-	// Append the last part after the loop.
-	if currentPart.Len() > 0 {
-		parts = append(parts, currentPart.String())
-	}
-
-	return parts
 }

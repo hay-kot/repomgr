@@ -2,61 +2,25 @@ package services
 
 import (
 	"context"
-	"database/sql"
-	"sync"
+	"errors"
 
-	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/db"
-	"github.com/hay-kot/repomgr/app/core/db/migrations"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
-type RepositoryService struct {
-	sql         *sql.DB
-	db          *db.Queries
-	mu          sync.RWMutex
-	clonedrepos map[string]bool
+var ErrNoReadmeFound = errors.New("no readme found")
+
+type ArtifactType string
+
+func (a ArtifactType) String() string {
+	return string(a)
 }
 
-func NewRepositoryService(s *sql.DB, b *bus.EventBus) (*RepositoryService, error) {
-	_, err := s.Exec(migrations.Schema)
-	if err != nil {
-		return nil, err
-	}
+const (
+	ArtifactTypeReadme ArtifactType = "repo.readme"
+)
 
-	rs := &RepositoryService{
-		sql:         s,
-		db:          db.New(s),
-		clonedrepos: make(map[string]bool),
-	}
-
-	b.SubCloneEvent(func(rce bus.RepoClonedEvent) {
-		rs.SetCloned(rce.Repo, true)
-	})
-
-	return rs, nil
-}
-
-func (s *RepositoryService) SetCloned(repo repos.Repository, v bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.clonedrepos[repo.CloneURL] = v
-}
-
-func (s *RepositoryService) IsCloned(repo repos.Repository) bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	v, ok := s.clonedrepos[repo.CloneURL]
-	if !ok {
-		return false
-	}
-
-	return v
-}
-
-func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, error) {
+func (s *AppService) GetAll(ctx context.Context) ([]repos.Repository, error) {
 	v, err := s.db.ReposGetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -81,7 +45,7 @@ func (s *RepositoryService) GetAll(ctx context.Context) ([]repos.Repository, err
 	return results, nil
 }
 
-func (s *RepositoryService) UpsertMany(ctx context.Context, items []repos.Repository) error {
+func (s *AppService) UpsertMany(ctx context.Context, items []repos.Repository) error {
 	// TODO: implement transactions
 	tx := s.db
 	for _, item := range items {
@@ -104,11 +68,11 @@ func (s *RepositoryService) UpsertMany(ctx context.Context, items []repos.Reposi
 	return nil
 }
 
-func (s *RepositoryService) UpsertOne(ctx context.Context, item repos.Repository) error {
+func (s *AppService) UpsertOne(ctx context.Context, item repos.Repository) error {
 	return s.UpsertMany(ctx, []repos.Repository{item})
 }
 
-func (s *RepositoryService) GetReadme(ctx context.Context, repoID int) ([]byte, error) {
+func (s *AppService) GetReadme(ctx context.Context, repoID int) ([]byte, error) {
 	v, err := s.db.RepoArtifactByType(ctx, db.RepoArtifactByTypeParams{
 		RepositoryID: int64(repoID),
 		DataType:     ArtifactTypeReadme.String(),
@@ -124,7 +88,7 @@ func (s *RepositoryService) GetReadme(ctx context.Context, repoID int) ([]byte, 
 	return v[0].Data, nil
 }
 
-func (s *RepositoryService) SetReadme(ctx context.Context, repoID int, data []byte) error {
+func (s *AppService) SetReadme(ctx context.Context, repoID int, data []byte) error {
 	_, err := s.db.RepoUpsertArtifact(ctx, db.RepoUpsertArtifactParams{
 		RepositoryID: int64(repoID),
 		DataType:     ArtifactTypeReadme.String(),
