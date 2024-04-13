@@ -126,9 +126,13 @@ func main() {
 						return err
 					}
 
-					_, err = ctrl.Search(appctx)
+          msg, err := ctrl.Search(appctx)
 					if err != nil {
 						return err
+					}
+
+					if msg != "" {
+						fmt.Println(msg)
 					}
 
 					return nil

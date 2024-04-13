@@ -13,10 +13,10 @@ import (
 )
 
 type Controller struct {
-	conf  *config.Config
-	repos *services.RepositoryService
-	cc    clientCache
-	bus   *bus.EventBus
+	app  *services.AppService
+	conf *config.Config
+	cc   clientCache
+	bus  *bus.EventBus
 }
 
 func NewController(conf *config.Config) (*Controller, error) {
@@ -29,17 +29,18 @@ func NewController(conf *config.Config) (*Controller, error) {
 	if err != nil {
 		return nil, err
 	}
+	exec := services.NewShellExecutor(conf.Shell)
 
 	// defer sqldb.Close()
-	rs, err := services.NewRepositoryService(sqldb, bus)
+	app, err := services.NewAppService(sqldb, conf, exec, bus)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Controller{
-		bus:   bus,
-		conf:  conf,
-		repos: rs,
+		bus:  bus,
+		conf: conf,
+		app:  app,
 		cc: clientCache{
 			cache: make(map[cacheKey]repos.RepositoryClient),
 		},

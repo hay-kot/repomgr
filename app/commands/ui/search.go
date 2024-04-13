@@ -18,7 +18,6 @@ import (
 
 // SearchCtrl is the controller/model for the fuzzer finding UI component
 type SearchCtrl struct {
-	rs           *services.RepositoryService
 	index        []string
 	repos        []repos.Repository
 	searchLength int
@@ -27,19 +26,23 @@ type SearchCtrl struct {
 	indexmap map[int]int
 	limit    int
 
+	exitmsg  string
 	keybinds config.KeyBindings
 }
 
 func NewSearchCtrl(
-	rs *services.RepositoryService,
+	app *services.AppService,
 	bindings config.KeyBindings,
 	r []repos.Repository,
 ) *SearchCtrl {
 	return &SearchCtrl{
-		rs:       rs,
 		repos:    r,
 		keybinds: bindings,
 	}
+}
+
+func (c *SearchCtrl) ExitMessage() string {
+	return c.exitmsg
 }
 
 // Selected returns the active selection by the user, or any empty object
@@ -92,14 +95,14 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 }
 
 type SearchView struct {
+	app    *services.AppService
 	ctrl   *SearchCtrl
-	cmd    *services.CommandService
 	search textinput.Model
 	height int
 	shift  int
 }
 
-func NewSearchView(ctrl *SearchCtrl, service *services.CommandService) SearchView {
+func NewSearchView(ctrl *SearchCtrl, app *services.AppService) SearchView {
 	ti := textinput.New()
 	ti.Focus()
 	ti.Prompt = styles.AccentBlue("> ")
@@ -108,7 +111,7 @@ func NewSearchView(ctrl *SearchCtrl, service *services.CommandService) SearchVie
 
 	return SearchView{
 		ctrl:   ctrl,
-		cmd:    service,
+		app:    app,
 		search: ti,
 	}
 }
@@ -147,14 +150,19 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		default:
-			ok, cmd := m.cmd.GetBoundCommand(msg.Type)
+			ok, cmd := m.app.GetBoundCommand(msg.Type)
 			if !ok {
 				break
 			}
 
-			err := m.cmd.Run(m.ctrl.Selected(), cmd)
+			result, err := m.app.Run(m.ctrl.Selected(), cmd)
 			if err != nil {
 				log.Err(err).Msg("failed to run command")
+				return m, tea.Quit
+			}
+
+			if result.IsExit {
+				m.ctrl.exitmsg = result.ExitMessage
 				return m, tea.Quit
 			}
 		}
@@ -251,10 +259,10 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 			iconPrefix += "  " // double width icon
 		}
 
-		if m.ctrl.rs.IsCloned(repo) {
+		if m.app.IsCloned(repo) {
 			iconPrefix += styles.Subtle(icons.Folder) + " "
 		} else {
-			iconPrefix += " "
+			iconPrefix += "  "
 		}
 
 		text := "github.com/" + repo.DisplayName() + strings.Repeat(" ", spaces)
@@ -262,8 +270,8 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 		if m.ctrl.selected == i {
 			prefix = styles.HighlightRow(styles.AccentRed(">"))
 			text = styles.HighlightRow(styles.Bold.Render(text))
-			iconPrefix = styles.HighlightRow(styles.Bold.Render(iconPrefix))
-			iconSpace = styles.HighlightRow(styles.Bold.Render(iconSpace))
+			iconPrefix = styles.HighlightRow(iconPrefix)
+			iconSpace = styles.HighlightRow(iconSpace)
 		} else {
 			if search != "" && strings.Contains(repo.Name, search) {
 				// Highlight the search term

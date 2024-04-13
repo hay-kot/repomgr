@@ -2,32 +2,14 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
 	"github.com/go-faker/faker/v4"
-	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/matryer/is"
 	_ "modernc.org/sqlite"
 )
-
-func tServiceFactory(t *testing.T) *RepositoryService {
-	db, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	b := bus.NewEventBus(10)
-
-	service, err := NewRepositoryService(db, b)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return service
-}
 
 func factory(n int) []repos.Repository {
 	results := make([]repos.Repository, n)
@@ -62,7 +44,7 @@ func compareRepository(is *is.I, got, want repos.Repository) {
 func Test_RepositoryService_UpsertMany(t *testing.T) {
 	const Count = 20
 
-	service := tServiceFactory(t)
+	service := tAppService(t)
 
 	tocreate := factory(Count)
 
@@ -95,7 +77,7 @@ func Test_RepositoryService_UpsertMany(t *testing.T) {
 }
 
 func Test_RepositoryService_UpsertOne(t *testing.T) {
-	service := tServiceFactory(t)
+	service := tAppService(t)
 
 	is := is.New(t)
 
@@ -114,7 +96,7 @@ func Test_RepositoryService_UpsertOne(t *testing.T) {
 }
 
 func Test_RepositoryService_GetReadme(t *testing.T) {
-	service := tServiceFactory(t)
+	service := tAppService(t)
 	is := is.New(t)
 
 	want := factory(1)[0]

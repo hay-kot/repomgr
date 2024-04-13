@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 	"text/template"
 
@@ -10,15 +11,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (s *AppService) Run(repo repos.Repository, command string) error {
+type CommandResult struct {
+	IsExit      bool
+	ExitMessage string
+}
+
+func (s *AppService) Run(repo repos.Repository, command string) (CommandResult, error) {
 	cmd, args, err := s.prepareCommand(repo, command)
 	if err != nil {
-		return err
+		return CommandResult{}, err
+	}
+
+	// Special Case
+	if strings.HasPrefix(command, string(AppCommandExit)) {
+		return CommandResult{
+			IsExit:      true,
+			ExitMessage: strings.TrimPrefix(cmd, ":Exit"),
+		}, nil
 	}
 
 	err = s.exec.Execute(cmd, args...)
 	if err != nil {
-		return err
+		return CommandResult{}, err
 	}
 
 	switch {
@@ -26,14 +40,14 @@ func (s *AppService) Run(repo repos.Repository, command string) error {
 		log.Debug().Str("repo", repo.DisplayName()).Msg("emitting clone event")
 		cloneDir, err := s.findCloneDirectory(repo)
 		if err != nil {
-			return err
+			return CommandResult{}, err
 		}
 
 		s.bus.PubCloneEvent(repo, cloneDir)
 		s.clonecache.Set(repo.CloneURL, true)
 	}
 
-	return nil
+	return CommandResult{}, nil
 }
 
 func (s *AppService) GetBoundCommand(cmd tea.KeyType) (bool, string) {
@@ -79,8 +93,17 @@ func (s *AppService) renderCommandTemplate(repo repos.Repository, command string
 func (s *AppService) prepareCommand(repo repos.Repository, command string) (string, []string, error) {
 	if strings.HasPrefix(command, ":") {
 		// special command
-		switch AppCommand(command) {
-		case AppCommandFork:
+		switch {
+		case strings.HasPrefix(command, AppCommandExit.String()):
+			cmd := strings.TrimPrefix(command, AppCommandExit.String()+" ")
+
+			cmd, err := s.renderCommandTemplate(repo, cmd)
+			if err != nil {
+				return "", nil, err
+			}
+
+			return cmd, nil, nil
+		case strings.HasPrefix(command, AppCommandFork.String()):
 			// TODO implement fork command
 			panic("not implemented")
 		default:
@@ -128,4 +151,34 @@ func splitWithQuotes(input string) []string {
 	}
 
 	return parts
+}
+
+type AppCommand string
+
+func (c AppCommand) String() string {
+	return string(c)
+}
+
+const (
+	AppCommandFork AppCommand = ":GitFork"
+	AppCommandExit AppCommand = ":Exit"
+)
+
+type Executor interface {
+	Execute(cmd string, args ...string) error
+}
+
+type ShellExecutor struct {
+	shell string
+}
+
+func NewShellExecutor(shell string) ShellExecutor {
+	return ShellExecutor{shell: shell}
+}
+
+func (e ShellExecutor) Execute(cmd string, args ...string) error {
+	log.Debug().Str("cmd", cmd).Strs("args", args).Msg("executing command")
+	err := exec.Command("bash", "-c", cmd+" "+strings.Join(args, " ")).Run()
+	log.Debug().Err(err).Msg("command executed")
+	return err
 }

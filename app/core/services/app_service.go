@@ -31,11 +31,12 @@ func NewAppService(s *sql.DB, cfg *config.Config, exec Executor, b *bus.EventBus
 	}
 
 	app := &AppService{
-		cfg:  cfg,
-		sql:  s,
-		exec: exec,
-		db:   db.New(s),
-		bus:  b,
+		cfg:        cfg,
+		sql:        s,
+		exec:       exec,
+		db:         db.New(s),
+		bus:        b,
+		clonecache: cache.NewMapCache[bool](40),
 	}
 
 	return app, nil

@@ -54,3 +54,16 @@ func (c *SliceCache[T]) Set(key string, value T) {
 	defer c.mu.Unlock()
 	c.cache = append(c.cache, tuple[string, T]{key, value})
 }
+
+func (c *SliceCache[T]) Get(key string) (T, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	for _, t := range c.cache {
+		if t.key == key {
+			return t.value, true
+		}
+	}
+	var zero T
+	return zero, false
+}
