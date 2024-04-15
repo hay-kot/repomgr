@@ -30,11 +30,7 @@ type SearchCtrl struct {
 	keybinds config.KeyBindings
 }
 
-func NewSearchCtrl(
-	app *services.AppService,
-	bindings config.KeyBindings,
-	r []repos.Repository,
-) *SearchCtrl {
+func NewSearchCtrl(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
 	return &SearchCtrl{
 		repos:    r,
 		keybinds: bindings,
@@ -71,10 +67,9 @@ func (c *SearchCtrl) Selected() repos.Repository {
 func (c *SearchCtrl) search(str string) []repos.Repository {
 	if str == "" {
 		c.searchLength = len(c.repos)
+		c.indexmap = nil
 		return c.repos
 	}
-
-	c.indexmap = make(map[int]int)
 
 	if c.index == nil {
 		c.index = make([]string, len(c.repos))
@@ -84,6 +79,7 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 	}
 
 	matches := fuzzy.Find(str, c.index)
+	c.indexmap = make(map[int]int, len(matches))
 	results := make([]repos.Repository, len(matches))
 	for i, match := range matches {
 		results[i] = c.repos[match.Index]
@@ -95,32 +91,33 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 }
 
 type SearchView struct {
-	app    *services.AppService
-	ctrl   *SearchCtrl
-	search textinput.Model
-	height int
-	shift  int
+	results []repos.Repository
+	app     *services.AppService
+	ctrl    *SearchCtrl
+	search  textinput.Model
+	height  int
+	shift   int
 }
 
-func NewSearchView(ctrl *SearchCtrl, app *services.AppService) SearchView {
+func NewSearchView(ctrl *SearchCtrl, app *services.AppService) *SearchView {
 	ti := textinput.New()
 	ti.Focus()
 	ti.Prompt = styles.AccentBlue("> ")
 	ti.CharLimit = 256
 	ti.Width = 80
 
-	return SearchView{
+	return &SearchView{
 		ctrl:   ctrl,
 		app:    app,
 		search: ti,
 	}
 }
 
-func (m SearchView) Init() tea.Cmd {
+func (m *SearchView) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -168,18 +165,18 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	old := m.search
-
+	old := m.search.Value()
 	m.search, cmd = m.search.Update(msg)
-	if old.Value() != m.search.Value() {
+	if old != m.search.Value() {
 		m.ctrl.selected = 0
 	}
 
+	m.results = m.ctrl.search(m.search.Value())
 	return m, cmd
 }
 
-func (m SearchView) View() string {
-	results := m.ctrl.search(m.search.Value())
+func (m *SearchView) View() string {
+	results := m.results
 	str := strings.Builder{}
 
 	// Calculate the number of allowed_rows we can display
@@ -213,7 +210,7 @@ func (m SearchView) View() string {
 	return str.String()
 }
 
-func (m SearchView) keyHelp() string {
+func (m *SearchView) keyHelp() string {
 	keys := make([]string, 0, len(m.ctrl.keybinds))
 	for key, cmd := range m.ctrl.keybinds {
 		keys = append(keys, fmt.Sprintf("%s: %s", key, cmd.Desc))

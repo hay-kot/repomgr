@@ -22,8 +22,8 @@ type Config struct {
 	CloneDirectories CloneDirectories `toml:"clone_directories"`
 }
 
-func New(confpath string, reader io.Reader) (*Config, error) {
-	cfg := Config{
+func Default() *Config {
+	return &Config{
 		Concurrency: runtime.NumCPU(),
 		Logs: Logs{
 			Level: zerolog.InfoLevel,
@@ -48,8 +48,11 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 			},
 		},
 	}
+}
 
-	_, err := toml.NewDecoder(reader).Decode(&cfg)
+func New(confpath string, reader io.Reader) (*Config, error) {
+	cfg := Default()
+	_, err := toml.NewDecoder(reader).Decode(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +72,7 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 			Directory = ExpandPath(confpath, cfg.CloneDirectories.Matchers[i].Directory)
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }
 
 func (c Config) PrepareDirectories() error {

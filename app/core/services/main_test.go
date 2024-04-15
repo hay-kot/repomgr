@@ -8,26 +8,28 @@ import (
 	"github.com/hay-kot/repomgr/app/core/config"
 )
 
-func tAppService(t *testing.T) *AppService {
+type tAppServiceOpts struct {
+	recorder *executeRecorder
+	cfg      *config.Config
+}
+
+func tAppService(t *testing.T, opts ...tAppServiceOpts) *AppService {
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	b := bus.NewEventBus(10)
+	cfg := config.Default()
 	exec := &executeRecorder{}
 
-	conf := &config.Config{
-		Concurrency:      8,
-		Shell:            "zsh",
-		KeyBindings:      map[string]config.KeyCommand{},
-		Sources:          []config.Source{},
-		Database:         config.Database{},
-		Logs:             config.Logs{},
-		CloneDirectories: config.CloneDirectories{},
+	if len(opts) > 0 {
+    cfg = opts[0].cfg 
+    exec = opts[0].recorder 
 	}
 
-	service, err := NewAppService(db, conf, exec, b)
+	b := bus.NewEventBus(10)
+
+	service, err := NewAppService(db, cfg, exec, b)
 	if err != nil {
 		t.Fatal(err)
 	}

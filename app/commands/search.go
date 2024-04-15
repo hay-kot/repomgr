@@ -14,7 +14,7 @@ func (ctrl *Controller) Search(ctx context.Context) (string, error) {
 	}
 
 	var (
-		searchCtrl = ui.NewSearchCtrl(ctrl.app, ctrl.conf.KeyBindings, r)
+		searchCtrl = ui.NewSearchCtrl(ctrl.conf.KeyBindings, r)
 		search     = ui.NewSearchView(searchCtrl, ctrl.app)
 		layout     = ui.NewLayout(search)
 	)

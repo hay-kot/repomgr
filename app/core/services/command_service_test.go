@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/config"
 	"github.com/matryer/is"
 )
@@ -26,28 +25,32 @@ func (e *executeRecorder) reset() {
 }
 
 func (e *executeRecorder) String() string {
-	return e.cmd + " " + strings.Join(e.args, " ")
+	return strings.TrimSpace(e.cmd + " " + strings.Join(e.args, " "))
 }
 
 func Test_CommandService_Run(t *testing.T) {
 	repo := factory(1)[0]
 
 	type tcase struct {
-		name  string
-		input string
-		want  string
+		name          string
+		input         string
+		want          string
+		commandResult *CommandResult
 	}
 
 	e := &executeRecorder{}
 
-	dirs := config.CloneDirectories{
+	cfg := config.Default()
+
+	cfg.CloneDirectories = config.CloneDirectories{
 		Default:  "/tmp/{{ .Repo.Username }}/{{ .Repo.Name }}",
 		Matchers: []config.Matcher{},
 	}
 
-	bus := bus.NewEventBus(10)
-
-	s := NewCommandService(dirs, nil, e, bus)
+	s := tAppService(t, tAppServiceOpts{
+		recorder: e,
+		cfg:      cfg,
+	})
 
 	tcases := []tcase{
 		{
@@ -57,13 +60,17 @@ func Test_CommandService_Run(t *testing.T) {
 		},
 		{
 			name:  "app command :GitClone",
-			input: ":GitClone",
+			input: "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'",
 			want:  "git clone '" + repo.CloneSSHURL + "' '/tmp/" + repo.DisplayName() + "'",
 		},
 		{
-			name:  "app command :GitPull",
-			input: ":GitPull",
-			want:  "git pull '/tmp/" + repo.DisplayName() + "'",
+			name:  "app command :Exit",
+			input: ":Exit '{{ .CloneDir }}'",
+			want:  "",
+			commandResult: &CommandResult{
+				IsExit:      true,
+				ExitMessage: "'/tmp/" + repo.DisplayName() + "'",
+			},
 		},
 	}
 
@@ -73,9 +80,13 @@ func Test_CommandService_Run(t *testing.T) {
 			is := is.New(t)
 
 			e.reset()
-			err := s.Run(repo, tc.input)
+			cr, err := s.Run(repo, tc.input)
 			is.NoErr(err) // expected no error on execute
 			is.Equal(e.String(), tc.want)
+
+			if tc.commandResult != nil {
+				is.Equal(*tc.commandResult, cr)
+			}
 		})
 	}
 }
