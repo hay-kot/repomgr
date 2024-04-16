@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/repofs"
 	"github.com/matryer/is"
 )
 
@@ -17,6 +18,10 @@ func (e *executeRecorder) Execute(cmd string, args ...string) error {
 	e.cmd = cmd
 	e.args = args
 	return nil
+}
+
+func (e *executeRecorder) ExecuteHandler(cmd string, args ...string) (*CommandHandle, error) {
+	panic("not implemented")
 }
 
 func (e *executeRecorder) reset() {
@@ -42,9 +47,9 @@ func Test_CommandService_Run(t *testing.T) {
 
 	cfg := config.Default()
 
-	cfg.CloneDirectories = config.CloneDirectories{
+	cfg.CloneDirectories = repofs.CloneDirectories{
 		Default:  "/tmp/{{ .Repo.Username }}/{{ .Repo.Name }}",
-		Matchers: []config.Matcher{},
+		Matchers: []repofs.Matcher{},
 	}
 
 	s := tAppService(t, tAppServiceOpts{

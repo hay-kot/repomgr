@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 	"text/template"
 
@@ -14,6 +13,15 @@ import (
 type CommandResult struct {
 	IsExit      bool
 	ExitMessage string
+}
+
+func (s *AppService) RunInteractive(repo repos.Repository, command string) (*CommandHandle, error) {
+	cmd, args, err := s.prepareCommand(repo, command)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.exec.ExecuteHandler(cmd, args...)
 }
 
 func (s *AppService) Run(repo repos.Repository, command string) (CommandResult, error) {
@@ -163,22 +171,3 @@ const (
 	AppCommandFork AppCommand = ":GitFork"
 	AppCommandExit AppCommand = ":Exit"
 )
-
-type Executor interface {
-	Execute(cmd string, args ...string) error
-}
-
-type ShellExecutor struct {
-	shell string
-}
-
-func NewShellExecutor(shell string) ShellExecutor {
-	return ShellExecutor{shell: shell}
-}
-
-func (e ShellExecutor) Execute(cmd string, args ...string) error {
-	log.Debug().Str("cmd", cmd).Strs("args", args).Msg("executing command")
-	err := exec.Command("bash", "-c", cmd+" "+strings.Join(args, " ")).Run()
-	log.Debug().Err(err).Msg("command executed")
-	return err
-}
