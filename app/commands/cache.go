@@ -66,7 +66,7 @@ func (ctrl *Controller) Cache(ctx context.Context) error {
 		msgch <- "saving repositories to database..."
 		msgch <- fmt.Sprintf("total cached: %d", len(items))
 
-		return ctrl.app.UpsertMany(ctx, items)
+		return ctrl.store.UpsertMany(ctx, items)
 	})
 }
 

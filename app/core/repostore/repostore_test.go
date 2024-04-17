@@ -1,7 +1,8 @@
-package services
+package repostore
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -10,6 +11,20 @@ import (
 	"github.com/matryer/is"
 	_ "modernc.org/sqlite"
 )
+
+func tRepoStore(t *testing.T) *RepoStore {
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v, err := New(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return v
+}
 
 func factory(n int) []repos.Repository {
 	results := make([]repos.Repository, n)
@@ -44,7 +59,7 @@ func compareRepository(is *is.I, got, want repos.Repository) {
 func Test_RepositoryService_UpsertMany(t *testing.T) {
 	const Count = 20
 
-	service := tAppService(t)
+	service := tRepoStore(t)
 
 	tocreate := factory(Count)
 
@@ -77,7 +92,7 @@ func Test_RepositoryService_UpsertMany(t *testing.T) {
 }
 
 func Test_RepositoryService_UpsertOne(t *testing.T) {
-	service := tAppService(t)
+	service := tRepoStore(t)
 
 	is := is.New(t)
 
@@ -96,7 +111,7 @@ func Test_RepositoryService_UpsertOne(t *testing.T) {
 }
 
 func Test_RepositoryService_GetReadme(t *testing.T) {
-	service := tAppService(t)
+	service := tRepoStore(t)
 	is := is.New(t)
 
 	want := factory(1)[0]

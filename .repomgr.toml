@@ -1,18 +1,7 @@
 # when running a command arguments are passed to the shell
 # via the -c flag. I haven't been able to get it to work without
-# a shell, so this the implementation is a bit hacky  
+# a shell, so this the implementation is a bit hacky
 shell = "bash"
-
-[clone_directories]
-# default directory for cloing if no matchers are found
-default = "./.temp/projects/{{ .Repo.Name }}"
-# matchers are checked in order, first match is used.
-# supports glob style matches
-matchers = [
-  { match = "business/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
-  { match = "mealie-recipes/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
-]
-
 
 [logs]
 file = "./.temp/repomgr.log"
@@ -24,10 +13,22 @@ format = "text"              # text or json
 file = "./.temp/repomgr.db"
 params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
 
+[key_bindings]
+"ctrl+f" = { cmd = "open '{{ .CloneDir }}'", desc = "open cloned folder", mode = "background" }
+"ctrl+l" = { cmd = "for i in {1..3}; do echo 'Hello, World!'; sleep 1; done ", desc = "loop throug and print hello world", mode = "readonly" }
+"ctrl+g" = { cmd = "lazygit --path={{ .CloneDir }}", desc = "lazygit", mode = "interactive" }
+
 [[sources]]
 type = "github"
 username = "hay-kot"
 token = "env:REPOMGR_GH_TOKEN"
 
-[key_bindings]
-"ctrl-f" = { cmd = "open '{{ .CloneDir }}'", desc = "open cloned folder" }
+[clone_directories]
+# default directory for cloing if no matchers are found
+default = "./.temp/projects/{{ .Repo.Name }}"
+# matchers are checked in order, first match is used.
+# supports glob style matches
+matchers = [
+  { match = "business/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
+  { match = "mealie-recipes/*", dir = "~/src/mealie-recipes/{{ .Name }}" },
+]

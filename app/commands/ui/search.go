@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/hay-kot/repomgr/app/core/config"
-	"github.com/hay-kot/repomgr/app/core/services"
+	"github.com/hay-kot/repomgr/app/core/commander"
+	"github.com/hay-kot/repomgr/app/core/repofs"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/hay-kot/repomgr/internal/icons"
 	"github.com/hay-kot/repomgr/internal/styles"
@@ -22,18 +22,23 @@ type SearchCtrl struct {
 	repos        []repos.Repository
 	searchLength int
 	selected     int
+
 	// key = filtered index, value = original index
 	indexmap map[int]int
 	limit    int
 
-	exitmsg  string
-	keybinds config.KeyBindings
+	exitmsg   string
+	rfs       *repofs.RepoFS
+	commander *commander.Commander
+	keybinds  commander.KeyBindings
 }
 
-func NewSearchCtrl(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
+func NewSearchCtrl(r []repos.Repository, rfs *repofs.RepoFS, cmd *commander.Commander) *SearchCtrl {
 	return &SearchCtrl{
-		repos:    r,
-		keybinds: bindings,
+		repos:     r,
+		rfs:       rfs,
+		commander: cmd,
+		keybinds:  cmd.Bindings(),
 	}
 }
 
@@ -92,14 +97,13 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 
 type SearchView struct {
 	results []repos.Repository
-	app     *services.AppService
 	ctrl    *SearchCtrl
 	search  textinput.Model
 	height  int
 	shift   int
 }
 
-func NewSearchView(ctrl *SearchCtrl, app *services.AppService) *SearchView {
+func NewSearchView(ctrl *SearchCtrl) *SearchView {
 	ti := textinput.New()
 	ti.Focus()
 	ti.Prompt = styles.AccentBlue("> ")
@@ -108,7 +112,6 @@ func NewSearchView(ctrl *SearchCtrl, app *services.AppService) *SearchView {
 
 	return &SearchView{
 		ctrl:   ctrl,
-		app:    app,
 		search: ti,
 	}
 }
@@ -129,8 +132,9 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-		switch msg.String() {
-		case "up":
+		msgstr := msg.String()
+		switch {
+		case "up" == msgstr:
 			if m.ctrl.selected > 0 {
 				m.ctrl.selected--
 
@@ -138,7 +142,7 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.shift--
 				}
 			}
-		case "down":
+		case "down" == msgstr:
 			if m.ctrl.selected < m.ctrl.limit-1 {
 				m.ctrl.selected++
 
@@ -146,21 +150,43 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.shift++
 				}
 			}
-		default:
-			ok, cmd := m.app.GetBoundCommand(msg.Type)
+		case msgstr == "enter", strings.HasPrefix(msgstr, "ctrl"):
+			action, ok := m.ctrl.commander.GetAction(msg.Type.String(), m.ctrl.Selected())
 			if !ok {
 				break
 			}
 
-			result, err := m.app.Run(m.ctrl.Selected(), cmd)
-			if err != nil {
-				log.Err(err).Msg("failed to run command")
+			if action.IsExit() {
+				m.ctrl.exitmsg = action.ExitMessage()
 				return m, tea.Quit
 			}
 
-			if result.IsExit {
-				m.ctrl.exitmsg = result.ExitMessage
-				return m, tea.Quit
+			switch action.Mode {
+			case commander.ModeReadOnly:
+				cmdModel := NewCommandView(action, m)
+				return cmdModel, cmdModel.Init()
+			case commander.ModeInteractive:
+				cmd, ok := action.IsExec()
+				if !ok {
+					log.Error().Msg("action defined as interactive but no exec command found")
+					break
+				}
+
+        teacmd := tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						log.Error().Err(err).Msg("failed to execute command")
+						return tea.Quit
+					}
+
+					return nil
+				})
+
+        return m, teacmd
+			case commander.ModeBackground:
+				// TODO run in background and handle errors
+				action.GoRun()
+			default:
+				panic("unhandled mode")
 			}
 		}
 	}
@@ -256,7 +282,7 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 			iconPrefix += "  " // double width icon
 		}
 
-		if m.app.IsCloned(repo) {
+		if m.ctrl.rfs.IsCloned(repo) {
 			iconPrefix += styles.Subtle(icons.Folder) + " "
 		} else {
 			iconPrefix += "  "

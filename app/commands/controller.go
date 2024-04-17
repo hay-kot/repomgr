@@ -2,45 +2,44 @@
 package commands
 
 import (
-	"context"
 	"database/sql"
 	"sync"
 
 	"github.com/hay-kot/repomgr/app/core/bus"
+	"github.com/hay-kot/repomgr/app/core/commander"
 	"github.com/hay-kot/repomgr/app/core/config"
-	"github.com/hay-kot/repomgr/app/core/services"
+	"github.com/hay-kot/repomgr/app/core/repofs"
+	"github.com/hay-kot/repomgr/app/core/repostore"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
 type Controller struct {
-	app  *services.AppService
-	conf *config.Config
-	cc   clientCache
-	bus  *bus.EventBus
+	rfs       *repofs.RepoFS
+	commander *commander.Commander
+	store     *repostore.RepoStore
+	conf      *config.Config
+	cc        clientCache
+	bus       *bus.EventBus
 }
 
-func NewController(conf *config.Config) (*Controller, error) {
-	bus := bus.NewEventBus(10)
-	go func() {
-		_ = bus.Start(context.Background())
-	}()
+func NewController(conf *config.Config, sqldb *sql.DB) (*Controller, error) {
 
-	sqldb, err := sql.Open("sqlite", conf.Database.DNS())
+	rfs := repofs.New(conf.CloneDirectories)
+
+	store, err := repostore.New(sqldb)
 	if err != nil {
 		return nil, err
 	}
-	exec := services.NewShellExecutor(conf.Shell)
 
-	// defer sqldb.Close()
-	app, err := services.NewAppService(sqldb, conf, exec, bus)
-	if err != nil {
-		return nil, err
-	}
+	commander := commander.New(conf.KeyBindings, rfs, &commander.ShellCommandBuilder{
+		Shell: conf.Shell,
+	})
 
 	return &Controller{
-		bus:  bus,
-		conf: conf,
-		app:  app,
+		conf:      conf,
+		store:     store,
+		rfs:       rfs,
+		commander: commander,
 		cc: clientCache{
 			cache: make(map[cacheKey]repos.RepositoryClient),
 		},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -110,7 +111,13 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					ctrl, err := commands.NewController(cfg)
+					db, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+					defer db.Close()
+
+					ctrl, err := commands.NewController(cfg, db)
 					if err != nil {
 						return err
 					}
@@ -121,12 +128,18 @@ func main() {
 				Name:  "search",
 				Usage: "search for repositories",
 				Action: func(ctx *cli.Context) error {
-					ctrl, err := commands.NewController(cfg)
+					db, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+					defer db.Close()
+
+					ctrl, err := commands.NewController(cfg, db)
 					if err != nil {
 						return err
 					}
 
-          msg, err := ctrl.Search(appctx)
+					msg, err := ctrl.Search(appctx)
 					if err != nil {
 						return err
 					}

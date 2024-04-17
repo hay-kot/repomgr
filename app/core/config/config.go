@@ -9,17 +9,19 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/hay-kot/repomgr/app/core/commander"
+	"github.com/hay-kot/repomgr/app/core/repofs"
 	"github.com/rs/zerolog"
 )
 
 type Config struct {
-	Concurrency      int              `toml:"concurrency"`
-	Shell            string           `toml:"shell"`
-	KeyBindings      KeyBindings      `toml:"key_bindings"`
-	Sources          []Source         `toml:"sources"`
-	Database         Database         `toml:"database"`
-	Logs             Logs             `toml:"logs"`
-	CloneDirectories CloneDirectories `toml:"clone_directories"`
+	Concurrency      int                     `toml:"concurrency"`
+	Shell            string                  `toml:"shell"`
+	KeyBindings      commander.KeyBindings   `toml:"key_bindings"`
+	Sources          []Source                `toml:"sources"`
+	Database         Database                `toml:"database"`
+	Logs             Logs                    `toml:"logs"`
+	CloneDirectories repofs.CloneDirectories `toml:"clone_directories"`
 }
 
 func Default() *Config {
@@ -33,20 +35,7 @@ func Default() *Config {
 			File:   "~/config/repomgr/repos.db",
 			Params: "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1",
 		},
-		KeyBindings: KeyBindings{
-			"ctrl-o": KeyCommand{
-				Cmd:  "open {{ .Repo.HTMLURL }}",
-				Desc: "open url",
-			},
-			"ctrl-p": KeyCommand{
-				Cmd:  "git clone '{{ .Repo.CloneSSHURL }}' '{{ .CloneDir }}'",
-				Desc: "clone repo",
-			},
-			"enter": KeyCommand{
-				Cmd:  ":Exit {{ .CloneDir }}",
-				Desc: "exit with clone directory path",
-			},
-		},
+		KeyBindings: commander.NewDefaultKeyBindings(),
 	}
 }
 

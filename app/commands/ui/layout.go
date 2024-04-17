@@ -7,8 +7,7 @@ import (
 var _ tea.Model = &Layout{}
 
 type Layout struct {
-	Body   tea.Model
-	Footer *Footer
+	Body tea.Model
 }
 
 func NewLayout(body tea.Model) *Layout {

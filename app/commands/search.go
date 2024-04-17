@@ -8,14 +8,14 @@ import (
 )
 
 func (ctrl *Controller) Search(ctx context.Context) (string, error) {
-	r, err := ctrl.app.GetAll(ctx)
+	r, err := ctrl.store.GetAll(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	var (
-		searchCtrl = ui.NewSearchCtrl(ctrl.conf.KeyBindings, r)
-		search     = ui.NewSearchView(searchCtrl, ctrl.app)
+		searchCtrl = ui.NewSearchCtrl(r, ctrl.rfs, ctrl.commander)
+		search     = ui.NewSearchView(searchCtrl)
 		layout     = ui.NewLayout(search)
 	)
 
