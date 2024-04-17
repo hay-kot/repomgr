@@ -11,10 +11,9 @@ type SourceType string
 var SourceTypeGithub SourceType = "github"
 
 type Source struct {
-	Type          SourceType `toml:"type"`
-	Username      string     `toml:"username"`
-	Organizations []string   `toml:"organizations"`
-	TokenKey      string     `toml:"token"`
+	Type     SourceType `toml:"type"`
+	Username string     `toml:"username"`
+	TokenKey string     `toml:"token"`
 }
 
 func (s Source) Token() string {
