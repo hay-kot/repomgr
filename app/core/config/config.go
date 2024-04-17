@@ -28,8 +28,10 @@ func Default() *Config {
 	return &Config{
 		Concurrency: runtime.NumCPU(),
 		Logs: Logs{
-			Level: zerolog.InfoLevel,
-			File:  "",
+			Level:  zerolog.InfoLevel,
+			File:   "",
+			Color:  false,
+			Format: "text",
 		},
 		Database: Database{
 			File:   "~/config/repomgr/repos.db",
