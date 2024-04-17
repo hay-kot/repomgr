@@ -14,7 +14,7 @@ tasks:
       - go run *.go {{ .CLI_ARGS }}
     silent: false
 
-  logs:tail:
+  logs:
     desc: tails the log file for the application
     cmds:
       - tail -f ${REPOMGR_LOG_FILE}
@@ -60,4 +60,4 @@ tasks:
   gen:
     desc: Generates code using sqlc
     cmds:
-      - sqlc generate 
+      - sqlc generate

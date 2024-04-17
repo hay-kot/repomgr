@@ -18,6 +18,8 @@ import (
 
 // SearchCtrl is the controller/model for the fuzzer finding UI component
 type SearchCtrl struct {
+	*state
+
 	index        []string
 	repos        []repos.Repository
 	searchLength int
@@ -27,7 +29,6 @@ type SearchCtrl struct {
 	indexmap map[int]int
 	limit    int
 
-	exitmsg   string
 	rfs       *repofs.RepoFS
 	commander *commander.Commander
 	keybinds  commander.KeyBindings
@@ -35,15 +36,12 @@ type SearchCtrl struct {
 
 func NewSearchCtrl(r []repos.Repository, rfs *repofs.RepoFS, cmd *commander.Commander) *SearchCtrl {
 	return &SearchCtrl{
+		state:     &state{},
 		repos:     r,
 		rfs:       rfs,
 		commander: cmd,
 		keybinds:  cmd.Bindings(),
 	}
-}
-
-func (c *SearchCtrl) ExitMessage() string {
-	return c.exitmsg
 }
 
 // Selected returns the active selection by the user, or any empty object
@@ -121,6 +119,10 @@ func (m *SearchView) Init() tea.Cmd {
 }
 
 func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.ctrl.isExit() {
+		return m, tea.Quit
+	}
+
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -157,7 +159,7 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if action.IsExit() {
-				m.ctrl.exitmsg = action.ExitMessage()
+				m.ctrl.signalExit(action.ExitMessage())
 				return m, tea.Quit
 			}
 
@@ -172,7 +174,7 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 
-        teacmd := tea.ExecProcess(cmd, func(err error) tea.Msg {
+				teacmd := tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
 						log.Error().Err(err).Msg("failed to execute command")
 						return tea.Quit
@@ -181,12 +183,12 @@ func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return nil
 				})
 
-        return m, teacmd
+				return m, teacmd
 			case commander.ModeBackground:
-				// TODO run in background and handle errors
-				action.GoRun()
+				ch := action.GoRun()
+				m.ctrl.recieveError(ch)
 			default:
-				panic("unhandled mode")
+				panic("unhandled mode " + action.Mode)
 			}
 		}
 	}

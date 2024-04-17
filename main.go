@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -187,7 +188,17 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		cons.UnknownError("An unexpected error occurred", err)
+		errstr := err.Error()
+
+		switch {
+		// ignore these errors, urfave/cli does not provide any way to hanldle them
+		// without direct string comparison :(
+		case strings.HasPrefix(errstr, "flag provided but not defined"):
+		default:
+			log.Error().Err(err).Msg("error occurred")
+			cons.UnknownError("An unexpected error occurred", err)
+		}
+
 		os.Exit(1)
 	}
 }
