@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/hay-kot/repomgr/app/core/bus"
 	"github.com/hay-kot/repomgr/app/core/commander"
 	"github.com/hay-kot/repomgr/app/core/config"
 	"github.com/hay-kot/repomgr/app/core/repofs"
@@ -19,11 +18,9 @@ type Controller struct {
 	store     *repostore.RepoStore
 	conf      *config.Config
 	cc        clientCache
-	bus       *bus.EventBus
 }
 
 func NewController(conf *config.Config, sqldb *sql.DB) (*Controller, error) {
-
 	rfs := repofs.New(conf.CloneDirectories)
 
 	store, err := repostore.New(sqldb)
