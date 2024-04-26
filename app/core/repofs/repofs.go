@@ -1,13 +1,14 @@
 package repofs
 
 import (
-	"html/template"
+	"errors"
 	"io/fs"
 	"os"
 	"strings"
 
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/hay-kot/repomgr/internal/cache"
+	"github.com/hay-kot/repomgr/internal/quicktmpl"
 	"github.com/rs/zerolog/log"
 )
 
@@ -66,21 +67,17 @@ func (rfs *RepoFS) findCloneDirectory(repo repos.Repository) (path string, dirtm
 
 	_, ok := rfs.fsmap[dirtmpl]
 	if !ok {
-		log.Error().Str("dir", dirtmpl).Msg("no filesystem found for directory")
+		err := errors.New("no filesystem found for directory")
+		log.Err(err).Str("dir", dirtmpl).Msg("no filesystem found for directory")
+		return "", "", err
 	}
 
-	tmpl, err := template.New("dir").Parse(dirtmpl)
+	out, err := quicktmpl.Render(dirtmpl, quicktmpl.Data{"Repo": repo})
 	if err != nil {
 		return "", "", err
 	}
 
-	b := &strings.Builder{}
-	err = tmpl.Execute(b, map[string]any{"Repo": repo})
-	if err != nil {
-		return "", "", err
-	}
-
-	return b.String(), dirtmpl, nil
+	return out, dirtmpl, nil
 }
 
 // FindCloneDirectory finds the clone directory for a repository based on the

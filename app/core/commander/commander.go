@@ -1,11 +1,11 @@
 package commander
 
 import (
-	"html/template"
 	"strings"
 
 	"github.com/hay-kot/repomgr/app/core/repofs"
 	"github.com/hay-kot/repomgr/app/repos"
+	"github.com/hay-kot/repomgr/internal/quicktmpl"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,8 +46,8 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 		return nil, false
 	}
 
-	if strings.HasPrefix(cmdRendered, ":") {
-		appAction, arg, ok := ParseAppAction(cmdRendered)
+	if MatchesActionSyntax(cmdRendered) {
+		appAction, rest, ok := ParseAppAction(cmdRendered)
 		if !ok {
 			log.Error().Str("cmd", cmdRendered).Msg("invalid app action")
 			return nil, false
@@ -62,7 +62,7 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 			// with the message that follows the command.
 			return &Action{
 				isExit:      true,
-				exitMessage: arg,
+				exitMessage: rest,
 			}, true
 		}
 	}
@@ -82,24 +82,13 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 }
 
 func (c *Commander) renderCommandTemplate(repo repos.Repository, command string) (string, error) {
-	tmpl, err := template.New("command").Parse(command)
-	if err != nil {
-		return "", err
-	}
-
 	cloneDir, err := c.rfs.FindCloneDirectory(repo)
 	if err != nil {
 		return "", err
 	}
 
-	b := &strings.Builder{}
-	err = tmpl.Execute(b, map[string]any{
+	return quicktmpl.Render(command, quicktmpl.Data{
 		"CloneDir": cloneDir,
 		"Repo":     repo,
 	})
-	if err != nil {
-		return "", err
-	}
-
-	return b.String(), nil
 }
