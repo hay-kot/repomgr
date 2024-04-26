@@ -78,8 +78,6 @@ func (k KeyCommand) String() string {
 func (k KeyCommand) IsValid() error {
 	if strings.HasPrefix(":", k.Cmd) {
 		validoptions := []string{
-			":GitClone",
-			":GitPull",
 			":Exit",
 		}
 

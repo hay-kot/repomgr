@@ -23,6 +23,10 @@ func New(bindings KeyBindings, rfs *repofs.RepoFS, bldr ActionCommandBuilder) *C
 	}
 }
 
+func (c *Commander) Bindings() KeyBindings {
+	return c.bindings
+}
+
 // GetAction returns an action for a given key binding. If the key binding is not found, it will
 // attempt to render the command template and return an action with the rendered command.
 //
@@ -42,13 +46,25 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 		return nil, false
 	}
 
-	// Special case for `Exit: ...` if the command starts with ":Exit", we return an exit action
-	// with the message that follows the command.
-	if strings.HasPrefix(cmdRendered, AppActionExit.String()) {
-		return &Action{
-			isExit:      true,
-			exitMessage: strings.TrimPrefix(cmdRendered, AppActionExit.String()+" "),
-		}, true
+	if strings.HasPrefix(cmdRendered, ":") {
+		appAction, arg, ok := ParseAppAction(cmdRendered)
+		if !ok {
+			log.Error().Str("cmd", cmdRendered).Msg("invalid app action")
+			return nil, false
+		}
+
+		switch appAction {
+		case AppActionFork:
+			// do something
+			panic("not implemented")
+		case AppActionExit:
+			// Special case for `Exit: ...` if the command starts with ":Exit", we return an exit action
+			// with the message that follows the command.
+			return &Action{
+				isExit:      true,
+				exitMessage: arg,
+			}, true
+		}
 	}
 
 	actionCmd := c.bldr.Build(cmdRendered)
@@ -68,10 +84,6 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 	}
 
 	return action, true
-}
-
-func (c *Commander) Bindings() KeyBindings {
-	return c.bindings
 }
 
 func (c *Commander) renderCommandTemplate(repo repos.Repository, command string) (string, error) {
