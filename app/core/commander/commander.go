@@ -75,12 +75,7 @@ func (c *Commander) GetAction(key string, repo repos.Repository) (action *Action
 	}
 
 	if strings.HasPrefix(cmdRendered, "git clone") {
-		action.OnFinished(func() {
-			err := c.rfs.Refresh(repo)
-			if err != nil {
-				log.Err(err).Msg("failed to refresh repo")
-			}
-		})
+		action.OnFinished(func() { c.rfs.Refresh(repo) })
 	}
 
 	return action, true

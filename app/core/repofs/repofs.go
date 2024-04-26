@@ -2,6 +2,7 @@ package repofs
 
 import (
 	"html/template"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -10,35 +11,83 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type embedfs struct {
+	root string
+	fs   fs.FS
+}
+
+func (e embedfs) Exists(path string) bool {
+	// trim root path from path
+	path = strings.TrimPrefix(path, e.root)
+	_, err := e.fs.Open(path)
+	return err == nil
+}
+
 type RepoFS struct {
 	clonedirs  CloneDirectories
 	clonecache cache.Cache[bool]
+	fsmap      map[string]embedfs
 }
 
 func New(dirs CloneDirectories) *RepoFS {
+	fsmap := make(map[string]embedfs, len(dirs.Matchers)+1)
+
+	for _, matcher := range dirs.Matchers {
+		dir := matcher.Directory
+
+		// dir should contain template syntax, e.g. "{{.Repo.DisplayName}}"
+		// we need to create an fs.FS for each top level directory where the
+		// repositories are cloned into
+		// if dir = "/path/to/repos/{{.Repo.DisplayName}}" then we need to create
+		// an fs.FS for "/path/to/repos"
+		prefix := strings.Split(dir, "{{")[0]
+		fsmap[dir] = embedfs{
+			root: prefix,
+			fs:   os.DirFS(prefix),
+		}
+	}
+
+	// default directory
+	defPrefix := strings.Split(dirs.Default, "{{")[0]
+	fsmap[dirs.Default] = embedfs{
+		root: defPrefix,
+		fs:   os.DirFS(defPrefix),
+	}
+
 	return &RepoFS{
 		clonedirs:  dirs,
 		clonecache: cache.NewMapCache[bool](20),
+		fsmap:      fsmap,
 	}
 }
 
-// FindCloneDirectory finds the clone directory for a repository based on the
-// CloneDirectories configuration.
-func (rfs *RepoFS) FindCloneDirectory(repo repos.Repository) (string, error) {
-	dirtmpl := rfs.clonedirs.FindMatch(repo.DisplayName())
+func (rfs *RepoFS) findCloneDirectory(repo repos.Repository) (path string, dirtmpl string, err error) {
+	dirtmpl = rfs.clonedirs.FindMatch(repo.DisplayName())
+
+	_, ok := rfs.fsmap[dirtmpl]
+	if !ok {
+		log.Error().Str("dir", dirtmpl).Msg("no filesystem found for directory")
+	}
 
 	tmpl, err := template.New("dir").Parse(dirtmpl)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	b := &strings.Builder{}
 	err = tmpl.Execute(b, map[string]any{"Repo": repo})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return b.String(), nil
+	return b.String(), dirtmpl, nil
+}
+
+// FindCloneDirectory finds the clone directory for a repository based on the
+// CloneDirectories configuration.
+func (rfs *RepoFS) FindCloneDirectory(repo repos.Repository) (string, error) {
+	path, _, err := rfs.findCloneDirectory(repo)
+	return path, err
 }
 
 // IsCloned checks if a repository is cloned. These results are cached
@@ -48,36 +97,21 @@ func (rfs *RepoFS) IsCloned(r repos.Repository) bool {
 		return v
 	}
 
-	path, err := rfs.FindCloneDirectory(r)
-	if err != nil {
-		log.Warn().Err(err).Msg("failed to find clone directory")
-		return false
-	}
-
-	// TODO: replace if virtual file system
-	// check if directory exists
-	if _, err := os.Stat(path); err == nil {
-		rfs.clonecache.Set(r.CloneURL, true)
-	} else {
-		rfs.clonecache.Set(r.CloneURL, false)
-	}
-
-	return false
+	return rfs.Refresh(r)
 }
 
-func (rfs *RepoFS) Refresh(repo repos.Repository) error {
-	path, err := rfs.FindCloneDirectory(repo)
+func (rfs *RepoFS) Refresh(r repos.Repository) (exists bool) {
+	path, dirtmpl, err := rfs.findCloneDirectory(r)
 	if err != nil {
-		return err
+		log.Warn().Err(err).Msg("failed to find clone directory")
 	}
 
-	// TODO: replace if virtual file system
-	// check if directory exists
-	if _, err := os.Stat(path); err == nil {
-		rfs.clonecache.Set(repo.CloneURL, true)
-	} else {
-		rfs.clonecache.Set(repo.CloneURL, false)
+	fs, ok := rfs.fsmap[dirtmpl]
+	if !ok {
+		log.Error().Str("dir", dirtmpl).Msg("no filesystem found for directory")
 	}
 
-	return nil
+	exists = fs.Exists(path)
+	rfs.clonecache.Set(r.CloneURL, exists)
+	return exists
 }

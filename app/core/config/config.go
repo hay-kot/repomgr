@@ -79,6 +79,8 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 	return cfg, nil
 }
 
+// PrepareDirectories creates the directories for the configuration file, logs,
+// and database file as required.
 func (c Config) PrepareDirectories() error {
 	dirs := []string{
 		filepath.Dir(c.Database.File),
@@ -122,6 +124,7 @@ func (c Config) Validate() error {
 	return nil
 }
 
+// Dump returns the configuration as a TOML string.
 func (c Config) Dump() (string, error) {
 	var b strings.Builder
 	enc := toml.NewEncoder(&b)
