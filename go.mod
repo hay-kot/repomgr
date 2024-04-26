@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/go-faker/faker/v4 v4.4.1
+	github.com/joho/godotenv v1.5.1
 	github.com/matryer/is v1.4.1
 	github.com/rs/zerolog v1.31.0
 	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f

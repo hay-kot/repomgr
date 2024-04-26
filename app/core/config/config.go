@@ -11,12 +11,14 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/hay-kot/repomgr/app/core/commander"
 	"github.com/hay-kot/repomgr/app/core/repofs"
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 )
 
 type Config struct {
 	Concurrency      int                     `toml:"concurrency"`
 	Shell            string                  `toml:"shell"`
+	DotEnvs          []string                `toml:"dotenvs"`
 	KeyBindings      commander.KeyBindings   `toml:"key_bindings"`
 	Sources          []Source                `toml:"sources"`
 	Database         Database                `toml:"database"`
@@ -49,6 +51,17 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 	}
 
 	err = cfg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	// load dotenvs
+	expandedPaths := []string{}
+	for _, path := range cfg.DotEnvs {
+		expandedPaths = append(expandedPaths, ExpandPath(confpath, path))
+	}
+
+	err = godotenv.Load(expandedPaths...)
 	if err != nil {
 		return nil, err
 	}

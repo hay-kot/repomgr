@@ -2,6 +2,7 @@
 # via the -c flag. I haven't been able to get it to work without
 # a shell, so this the implementation is a bit hacky
 shell = "bash"
+dotenvs = [".env"]
 
 [logs]
 file = "./.temp/repomgr.log"
@@ -16,7 +17,7 @@ params = "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1"
 [key_bindings]
 "ctrl+f" = { cmd = "open '{{ .CloneDir }}'", desc = "open cloned folder", mode = "background" }
 "ctrl+l" = { cmd = "for i in {1..3}; do echo 'Hello, World!'; sleep 1; done ", desc = "test cmd", mode = "readonly" }
-"ctrl+k" = { cmd = "open '{{ .Repo.HTMLURL }}/pulls'", desc = "open prs", mode = "background" } 
+"ctrl+k" = { cmd = "open '{{ .Repo.HTMLURL }}/pulls'", desc = "open prs", mode = "background" }
 "ctrl+g" = { cmd = "lazygit --path={{ .CloneDir }}", desc = "lazygit", mode = "interactive" }
 "ctrl+e" = { cmd = "cd {{ .CloneDir }} && nvim {{ .CloneDir }}", desc = "nvim", mode = "interactive" }
 

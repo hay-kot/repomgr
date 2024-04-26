@@ -4,9 +4,6 @@ env:
   REPOMGR_LOG_FILE: "./.temp/repomgr.log"
   REPOMGR_CONFIG: "./.repomgr.toml"
 
-dotenv:
-  - .env
-
 tasks:
   run:
     desc: Runs the main application and supports passing CLI args
