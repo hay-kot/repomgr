@@ -23,7 +23,7 @@ var Funcs = template.FuncMap{
 // New creates a new template with the given template string. It also adds the
 // Funcs to the template.
 func New(tmpl string) (*template.Template, error) {
-	t, err := template.New("dir").Funcs(Funcs).Parse(tmpl)
+	t, err := template.New("t").Funcs(Funcs).Parse(tmpl)
 
 	return t, err
 }
