@@ -32,7 +32,7 @@ func factory(n int) []repos.Repository {
 		results[n] = repos.Repository{
 			RemoteID:    faker.UUIDHyphenated(),
 			Name:        faker.Name(),
-			Username:    faker.Username(),
+			Owner:    faker.Username(),
 			Description: faker.Sentence(),
 			HTMLURL:     faker.URL(),
 			CloneURL:    faker.URL(),
@@ -49,7 +49,7 @@ func compareRepository(is *is.I, got, want repos.Repository) {
 	is.Helper()
 	is.Equal(got.RemoteID, want.RemoteID)
 	is.Equal(got.Name, want.Name)
-	is.Equal(got.Username, want.Username)
+	is.Equal(got.Owner, want.Owner)
 	is.Equal(got.Description, want.Description)
 	is.Equal(got.CloneURL, want.CloneURL)
 	is.Equal(got.CloneSSHURL, want.CloneSSHURL)

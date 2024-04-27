@@ -43,7 +43,7 @@ func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 	return Repository{
 		RemoteID:    strconv.FormatInt(repo.GetID(), 10),
 		Name:        repo.GetName(),
-		Username:    username,
+		Owner:       username,
 		Description: repo.GetDescription(),
 		HTMLURL:     repo.GetHTMLURL(),
 		CloneURL:    repo.GetCloneURL(),

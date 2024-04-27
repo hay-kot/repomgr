@@ -38,7 +38,7 @@ func (s *RepoStore) GetAll(ctx context.Context) ([]repos.Repository, error) {
 			ID:          int(item.ID),
 			RemoteID:    item.RemoteID,
 			Name:        item.Name,
-			Username:    item.Username,
+			Owner:    item.Username,
 			Description: item.Description,
 			HTMLURL:     item.HtmlUrl,
 			CloneURL:    item.CloneUrl,
@@ -58,7 +58,7 @@ func (s *RepoStore) UpsertMany(ctx context.Context, items []repos.Repository) er
 		_, err := tx.RepoUpsert(ctx, db.RepoUpsertParams{
 			RemoteID:    item.RemoteID,
 			Name:        item.Name,
-			Username:    item.Username,
+			Username:    item.Owner,
 			Description: item.Description,
 			HtmlUrl:     item.HTMLURL,
 			CloneUrl:    item.CloneURL,
