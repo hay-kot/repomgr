@@ -2,6 +2,7 @@ package commander
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -76,20 +77,12 @@ func (k KeyCommand) String() string {
 }
 
 func (k KeyCommand) IsValid() error {
-	if strings.HasPrefix(":", k.Cmd) {
+	if strings.HasPrefix(k.Cmd, ":") {
 		validoptions := []string{
 			":Exit",
 		}
 
-		// check if it's a valid option
-		var found bool
-		for _, option := range validoptions {
-			if option == k.Cmd {
-				found = true
-				break
-			}
-		}
-
+		found := slices.Contains(validoptions, k.Cmd)
 		if !found {
 			return fmt.Errorf("invalid command '%s'", k.Cmd)
 		}

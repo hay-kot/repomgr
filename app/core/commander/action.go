@@ -5,8 +5,6 @@ import (
 	"os/exec"
 )
 
-type IAction interface{}
-
 type Action struct {
 	Mode        Mode
 	cmd         ActionCommand
