@@ -32,7 +32,7 @@ func factory(n int) []repos.Repository {
 		results[n] = repos.Repository{
 			RemoteID:    faker.UUIDHyphenated(),
 			Name:        faker.Name(),
-			Owner:    faker.Username(),
+			Owner:       faker.Username(),
 			Description: faker.Sentence(),
 			HTMLURL:     faker.URL(),
 			CloneURL:    faker.URL(),

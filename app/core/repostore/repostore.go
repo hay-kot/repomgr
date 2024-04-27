@@ -38,7 +38,7 @@ func (s *RepoStore) GetAll(ctx context.Context) ([]repos.Repository, error) {
 			ID:          int(item.ID),
 			RemoteID:    item.RemoteID,
 			Name:        item.Name,
-			Owner:    item.Username,
+			Owner:       item.Username,
 			Description: item.Description,
 			HTMLURL:     item.HtmlUrl,
 			CloneURL:    item.CloneUrl,

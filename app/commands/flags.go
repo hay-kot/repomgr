@@ -1,6 +1,6 @@
 package commands
 
 type Flags struct {
-  CloneDir         string 
-	LogLevel         string
+	CloneDir string
+	LogLevel string
 }
