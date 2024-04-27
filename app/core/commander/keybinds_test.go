@@ -19,7 +19,7 @@ func Test_KeyCommand_IsValid(t *testing.T) {
 		{
 			name: "valid command",
 			cmd: KeyCommand{
-				Cmd:  ":Exit",
+				Cmd:  ":Exit {{ .Repo.CloneDir }}",
 				Desc: "Exit the application",
 				Mode: ModeBackground,
 			},
