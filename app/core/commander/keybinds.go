@@ -82,7 +82,9 @@ func (k KeyCommand) IsValid() error {
 			":Exit",
 		}
 
-		found := slices.Contains(validoptions, k.Cmd)
+		found := slices.ContainsFunc(validoptions, func(s string) bool {
+			return strings.HasPrefix(k.Cmd, s)
+		})
 		if !found {
 			return fmt.Errorf("invalid command '%s'", k.Cmd)
 		}
