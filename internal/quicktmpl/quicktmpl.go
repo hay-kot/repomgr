@@ -14,10 +14,11 @@ type Data map[string]any
 // you can modify this map to add more functions to the template.
 // This should be done before calling New or Render.
 var Funcs = template.FuncMap{
-	"trim":  strings.Trim,
-	"join":  strings.Join,
-	"lower": strings.ToLower,
-	"upper": strings.ToUpper,
+	"trim":    strings.TrimSpace,
+	"trimset": strings.Trim,
+	"join":    strings.Join,
+	"lower":   strings.ToLower,
+	"upper":   strings.ToUpper,
 }
 
 // New creates a new template with the given template string. It also adds the
