@@ -2,34 +2,45 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/hay-kot/repomgr/app/core/config"
+	"github.com/hay-kot/repomgr/app/core/commander"
+	"github.com/hay-kot/repomgr/app/core/repofs"
 	"github.com/hay-kot/repomgr/app/repos"
 	"github.com/hay-kot/repomgr/internal/icons"
 	"github.com/hay-kot/repomgr/internal/styles"
+	"github.com/rs/zerolog/log"
 	"github.com/sahilm/fuzzy"
 )
 
 // SearchCtrl is the controller/model for the fuzzer finding UI component
 type SearchCtrl struct {
+	*state
+
 	index        []string
 	repos        []repos.Repository
 	searchLength int
 	selected     int
+
 	// key = filtered index, value = original index
 	indexmap map[int]int
 	limit    int
 
-	keybinds config.KeyBindings
+	rfs       *repofs.RepoFS
+	commander *commander.Commander
+	keybinds  commander.KeyBindings
 }
 
-func NewSearchCtrl(bindings config.KeyBindings, r []repos.Repository) *SearchCtrl {
+func NewSearchCtrl(r []repos.Repository, rfs *repofs.RepoFS, cmd *commander.Commander) *SearchCtrl {
 	return &SearchCtrl{
-		repos:    r,
-		keybinds: bindings,
+		state:     &state{},
+		repos:     r,
+		rfs:       rfs,
+		commander: cmd,
+		keybinds:  cmd.Bindings(),
 	}
 }
 
@@ -59,19 +70,19 @@ func (c *SearchCtrl) Selected() repos.Repository {
 func (c *SearchCtrl) search(str string) []repos.Repository {
 	if str == "" {
 		c.searchLength = len(c.repos)
+		c.indexmap = nil
 		return c.repos
 	}
-
-	c.indexmap = make(map[int]int)
 
 	if c.index == nil {
 		c.index = make([]string, len(c.repos))
 		for i, repo := range c.repos {
-			c.index[i] = repo.Name
+			c.index[i] = repo.DisplayName()
 		}
 	}
 
 	matches := fuzzy.Find(str, c.index)
+	c.indexmap = make(map[int]int, len(matches))
 	results := make([]repos.Repository, len(matches))
 	for i, match := range matches {
 		results[i] = c.repos[match.Index]
@@ -83,30 +94,35 @@ func (c *SearchCtrl) search(str string) []repos.Repository {
 }
 
 type SearchView struct {
-	ctrl   *SearchCtrl
-	search textinput.Model
-	height int
-	shift  int
+	results []repos.Repository
+	ctrl    *SearchCtrl
+	search  textinput.Model
+	height  int
+	shift   int
 }
 
-func NewSearchView(ctrl *SearchCtrl) SearchView {
+func NewSearchView(ctrl *SearchCtrl) *SearchView {
 	ti := textinput.New()
 	ti.Focus()
 	ti.Prompt = styles.AccentBlue("> ")
 	ti.CharLimit = 256
 	ti.Width = 80
 
-	return SearchView{
-		search: ti,
+	return &SearchView{
 		ctrl:   ctrl,
+		search: ti,
 	}
 }
 
-func (m SearchView) Init() tea.Cmd {
+func (m *SearchView) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.ctrl.isExit() {
+		return m, tea.Quit
+	}
+
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -116,12 +132,11 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
-		case tea.KeyEnter:
-			return m, tea.Quit
 		}
 
-		switch msg.String() {
-		case "up":
+		msgstr := msg.String()
+		switch {
+		case "up" == msgstr:
 			if m.ctrl.selected > 0 {
 				m.ctrl.selected--
 
@@ -129,7 +144,7 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.shift--
 				}
 			}
-		case "down":
+		case "down" == msgstr:
 			if m.ctrl.selected < m.ctrl.limit-1 {
 				m.ctrl.selected++
 
@@ -137,19 +152,63 @@ func (m SearchView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.shift++
 				}
 			}
+		case msgstr == "enter", strings.HasPrefix(msgstr, "ctrl"):
+			action, ok := m.ctrl.commander.GetAction(msg.Type.String(), m.ctrl.Selected())
+			if !ok {
+				break
+			}
+
+			if action.IsExit() {
+				m.ctrl.signalExit(action.ExitMessage())
+				return m, tea.Quit
+			}
+
+			switch action.Mode {
+			case commander.ModeReadOnly:
+				cmdModel := NewCommandView(action, m)
+				return cmdModel, cmdModel.Init()
+			case commander.ModeInteractive:
+				cmd, ok := action.IsExec()
+				if !ok {
+					log.Error().Msg("action defined as interactive but no exec command found")
+					break
+				}
+
+				teacmd := tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						log.Error().Err(err).Msg("failed to execute command")
+						return tea.Quit
+					}
+
+					return nil
+				})
+
+				return m, teacmd
+			case commander.ModeBackground:
+				ch := action.GoRun()
+				m.ctrl.recieveError(ch)
+			default:
+				panic("unhandled mode " + action.Mode)
+			}
 		}
 	}
 
+	old := m.search.Value()
 	m.search, cmd = m.search.Update(msg)
+	if old != m.search.Value() {
+		m.ctrl.selected = 0
+	}
+
+	m.results = m.ctrl.search(m.search.Value())
 	return m, cmd
 }
 
-func (m SearchView) View() string {
-	results := m.ctrl.search(m.search.Value())
+func (m *SearchView) View() string {
+	results := m.results
 	str := strings.Builder{}
 
 	// Calculate the number of allowed_rows we can display
-	m.ctrl.limit = m.height - 3
+	m.ctrl.limit = m.height - 8
 
 	var determinedMax int
 	if m.ctrl.limit < 0 {
@@ -169,7 +228,33 @@ func (m SearchView) View() string {
 	str.WriteString(m.search.View())
 	str.WriteString(styles.Subtle(fmt.Sprintf("\n  %d/%d", len(results), len(m.ctrl.repos))) + "\n")
 	str.WriteString(m.fmtMatches(results[:determinedMax]))
+
+	// fill remaining height - 1
+	for i := 0; i < m.height-determinedMax-3; i++ {
+		str.WriteString("\n")
+	}
+
+	str.WriteString(m.keyHelp())
 	return str.String()
+}
+
+func (m *SearchView) keyHelp() string {
+	keys := make([]string, 0, len(m.ctrl.keybinds))
+	for key, cmd := range m.ctrl.keybinds {
+		keys = append(keys, fmt.Sprintf("%s: %s", key, cmd.Desc))
+	}
+	slices.Sort(keys)
+
+	bldr := strings.Builder{}
+	for i, key := range keys {
+		bldr.WriteString(styles.Subtle(" " + key))
+		if i < len(keys)-1 {
+			bldr.WriteString(" ")
+			bldr.WriteString(styles.Subtle(icons.Dot))
+		}
+	}
+
+	return bldr.String()
 }
 
 func (m SearchView) fmtMatches(repos []repos.Repository) string {
@@ -194,9 +279,15 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 		)
 
 		if repo.IsFork {
-			iconPrefix += styles.Subtle(icons.Fork)
+			iconPrefix += styles.Subtle(icons.Fork) + " "
 		} else {
-			iconPrefix += " "
+			iconPrefix += "  " // double width icon
+		}
+
+		if m.ctrl.rfs.IsCloned(repo) {
+			iconPrefix += styles.Subtle(icons.Folder) + " "
+		} else {
+			iconPrefix += "  "
 		}
 
 		text := "github.com/" + repo.DisplayName() + strings.Repeat(" ", spaces)
@@ -204,8 +295,8 @@ func (m SearchView) fmtMatches(repos []repos.Repository) string {
 		if m.ctrl.selected == i {
 			prefix = styles.HighlightRow(styles.AccentRed(">"))
 			text = styles.HighlightRow(styles.Bold.Render(text))
-			iconPrefix = styles.HighlightRow(styles.Bold.Render(iconPrefix))
-			iconSpace = styles.HighlightRow(styles.Bold.Render(iconSpace))
+			iconPrefix = styles.HighlightRow(iconPrefix)
+			iconSpace = styles.HighlightRow(iconSpace)
 		} else {
 			if search != "" && strings.Contains(repo.Name, search) {
 				// Highlight the search term

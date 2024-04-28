@@ -9,37 +9,59 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/hay-kot/repomgr/app/core/commander"
+	"github.com/hay-kot/repomgr/app/core/repofs"
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 )
 
 type Config struct {
-	KeyBindings      KeyBindings      `toml:"key_bindings"`
-	Concurrency      int              `toml:"concurrency"`
-	Sources          []Source         `toml:"sources"`
-	Database         Database         `toml:"database"`
-	Logs             Logs             `toml:"logs"`
-	CloneDirectories CloneDirectories `toml:"clone_directories"`
+	Concurrency      int                     `toml:"concurrency"`
+	Shell            string                  `toml:"shell"`
+	DotEnvs          []string                `toml:"dotenvs"`
+	KeyBindings      commander.KeyBindings   `toml:"key_bindings"`
+	Sources          []Source                `toml:"sources"`
+	Database         Database                `toml:"database"`
+	Logs             Logs                    `toml:"logs"`
+	CloneDirectories repofs.CloneDirectories `toml:"clone_directories"`
 }
 
-func New(confpath string, reader io.Reader) (*Config, error) {
-	cfg := Config{
+func Default() *Config {
+	return &Config{
 		Concurrency: runtime.NumCPU(),
 		Logs: Logs{
-			Level: zerolog.InfoLevel,
-			File:  "",
+			Level:  zerolog.InfoLevel,
+			File:   "",
+			Color:  false,
+			Format: "text",
 		},
 		Database: Database{
 			File:   "~/config/repomgr/repos.db",
 			Params: "_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1",
 		},
+		KeyBindings: commander.NewDefaultKeyBindings(),
 	}
+}
 
-	_, err := toml.NewDecoder(reader).Decode(&cfg)
+func New(confpath string, reader io.Reader) (*Config, error) {
+	cfg := Default()
+	_, err := toml.NewDecoder(reader).Decode(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	err = cfg.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	// load dotenvs
+	expandedPaths := []string{}
+	for _, path := range cfg.DotEnvs {
+		expandedPaths = append(expandedPaths, ExpandPath(confpath, path))
+	}
+
+	err = godotenv.Load(expandedPaths...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +76,11 @@ func New(confpath string, reader io.Reader) (*Config, error) {
 			Directory = ExpandPath(confpath, cfg.CloneDirectories.Matchers[i].Directory)
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }
 
+// PrepareDirectories creates the directories for the configuration file, logs,
+// and database file as required.
 func (c Config) PrepareDirectories() error {
 	dirs := []string{
 		filepath.Dir(c.Database.File),
@@ -64,7 +88,7 @@ func (c Config) PrepareDirectories() error {
 	}
 
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
 	}
@@ -84,7 +108,7 @@ func (c Config) Validate() error {
 	validators := []validator{
 		c.KeyBindings,
 		c.Database,
-    c.CloneDirectories,
+		c.CloneDirectories,
 	}
 
 	for _, source := range c.Sources {
@@ -100,6 +124,7 @@ func (c Config) Validate() error {
 	return nil
 }
 
+// Dump returns the configuration as a TOML string.
 func (c Config) Dump() (string, error) {
 	var b strings.Builder
 	enc := toml.NewEncoder(&b)
@@ -108,9 +133,10 @@ func (c Config) Dump() (string, error) {
 }
 
 type Logs struct {
-	Level zerolog.Level `toml:"level"`
-	File  string        `toml:"file"`
-	Color bool          `toml:"color"`
+	Level  zerolog.Level `toml:"level"`
+	File   string        `toml:"file"`
+	Color  bool          `toml:"color"`
+	Format string        `toml:"format"`
 }
 
 type Database struct {

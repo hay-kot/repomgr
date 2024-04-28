@@ -10,11 +10,23 @@ type SourceType string
 
 var SourceTypeGithub SourceType = "github"
 
+func (st SourceType) String() string {
+	return string(st)
+}
+
+func (st SourceType) IsValid() bool {
+	switch st {
+	case SourceTypeGithub:
+		return true
+	default:
+		return false
+	}
+}
+
 type Source struct {
-	Type          SourceType `toml:"type"`
-	Username      string     `toml:"username"`
-	Organizations []string   `toml:"organizations"`
-	TokenKey      string     `toml:"token"`
+	Type     SourceType `toml:"type"`
+	Username string     `toml:"username"`
+	TokenKey string     `toml:"token"`
 }
 
 func (s Source) Token() string {
@@ -30,16 +42,7 @@ func (s Source) Validate() error {
 		return fmt.Errorf("source type is required")
 	}
 
-	types := []SourceType{SourceTypeGithub}
-	var found bool
-	for _, t := range types {
-		if t == s.Type {
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	if !s.Type.IsValid() {
 		return fmt.Errorf("source type is invalid")
 	}
 

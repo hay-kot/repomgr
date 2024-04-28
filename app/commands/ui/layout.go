@@ -1,6 +1,8 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 var _ tea.Model = &Layout{}
 

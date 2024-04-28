@@ -17,7 +17,6 @@ type GithubClient struct {
 
 func NewGithubClient(httpclient *http.Client, token string) *GithubClient {
 	client := github.NewClient(httpclient).WithAuthToken(token)
-
 	return &GithubClient{client: client}
 }
 
@@ -44,7 +43,7 @@ func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 	return Repository{
 		RemoteID:    strconv.FormatInt(repo.GetID(), 10),
 		Name:        repo.GetName(),
-		Username:    username,
+		Owner:       username,
 		Description: repo.GetDescription(),
 		HTMLURL:     repo.GetHTMLURL(),
 		CloneURL:    repo.GetCloneURL(),
@@ -56,13 +55,14 @@ func (g *GithubClient) mapRepository(repo *github.Repository) Repository {
 
 // GetAllByUsername implements RepositoryClient.
 func (g *GithubClient) GetAllByUsername(ctx context.Context, username string) ([]Repository, error) {
-	opt := &github.RepositoryListByUserOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+	opt := &github.RepositoryListByAuthenticatedUserOptions{
+		Type:        "all",
+		ListOptions: github.ListOptions{PerPage: 200},
 	}
 	// get all pages of results
 	var allRepos []*github.Repository
 	for {
-		repos, resp, err := g.client.Repositories.ListByUser(ctx, username, opt)
+		repos, resp, err := g.client.Repositories.ListByAuthenticatedUser(ctx, opt)
 		if err != nil {
 			log.Err(err).Ctx(ctx).
 				Str("username", username).

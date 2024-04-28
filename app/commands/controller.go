@@ -2,27 +2,45 @@
 package commands
 
 import (
+	"database/sql"
 	"sync"
 
+	"github.com/hay-kot/repomgr/app/core/commander"
 	"github.com/hay-kot/repomgr/app/core/config"
-	"github.com/hay-kot/repomgr/app/core/services"
+	"github.com/hay-kot/repomgr/app/core/repofs"
+	"github.com/hay-kot/repomgr/app/core/repostore"
 	"github.com/hay-kot/repomgr/app/repos"
 )
 
 type Controller struct {
-	conf  *config.Config
-	repos *services.RepositoryService
-	cc    clientCache
+	rfs       *repofs.RepoFS
+	commander *commander.Commander
+	store     *repostore.RepoStore
+	conf      *config.Config
+	cc        clientCache
 }
 
-func NewController(conf *config.Config, rs *services.RepositoryService) *Controller {
+func NewController(conf *config.Config, sqldb *sql.DB) (*Controller, error) {
+	rfs := repofs.New(conf.CloneDirectories)
+
+	store, err := repostore.New(sqldb)
+	if err != nil {
+		return nil, err
+	}
+
+	commander := commander.New(conf.KeyBindings, rfs, &commander.ShellCommandBuilder{
+		Shell: conf.Shell,
+	})
+
 	return &Controller{
-		conf:  conf,
-		repos: rs,
+		conf:      conf,
+		store:     store,
+		rfs:       rfs,
+		commander: commander,
 		cc: clientCache{
 			cache: make(map[cacheKey]repos.RepositoryClient),
 		},
-	}
+	}, nil
 }
 
 type cacheKey struct {

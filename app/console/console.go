@@ -8,6 +8,11 @@ import (
 	"github.com/hay-kot/repomgr/internal/styles"
 )
 
+// ConsoleOutput is an interface for objects that can be rendered to the console.
+type ConsoleOutput interface {
+	ConsoleOutput() string
+}
+
 type Console struct {
 	writer io.Writer
 	color  bool
@@ -28,10 +33,18 @@ func (c *Console) write(str string) {
 }
 
 func (c *Console) UnknownError(title string, err error) {
-	bldr := strings.Builder{}
+	bldr := &strings.Builder{}
 
 	bldr.WriteString(styles.Error.Render("An unexpected error occurred"))
 	bldr.WriteString("\n\n")
+
+	consoleErr, ok := err.(ConsoleOutput)
+	if ok {
+		bldr.WriteString(consoleErr.ConsoleOutput())
+		c.write(bldr.String())
+		return
+	}
+
 	bldr.WriteString(styles.Padding.Render("Error"))
 	bldr.WriteString("\n  '")
 	bldr.WriteString(err.Error())

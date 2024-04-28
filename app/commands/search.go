@@ -5,17 +5,16 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hay-kot/repomgr/app/commands/ui"
-	"github.com/hay-kot/repomgr/app/repos"
 )
 
-func (ctrl *Controller) Search(ctx context.Context) (repos.Repository, error) {
-	r, err := ctrl.repos.GetAll(ctx)
+func (ctrl *Controller) Search(ctx context.Context) (string, error) {
+	r, err := ctrl.store.GetAll(ctx)
 	if err != nil {
-		return repos.Repository{}, err
+		return "", err
 	}
 
 	var (
-		searchCtrl = ui.NewSearchCtrl(ctrl.conf.KeyBindings, r)
+		searchCtrl = ui.NewSearchCtrl(r, ctrl.rfs, ctrl.commander)
 		search     = ui.NewSearchView(searchCtrl)
 		layout     = ui.NewLayout(search)
 	)
@@ -23,10 +22,9 @@ func (ctrl *Controller) Search(ctx context.Context) (repos.Repository, error) {
 	p := tea.NewProgram(layout, tea.WithAltScreen())
 	_, err = p.Run()
 	if err != nil {
-		return repos.Repository{}, err
+		return "", err
 	}
 
-	selected := searchCtrl.Selected()
-
-	return selected, nil
+	msg := searchCtrl.ExitMessage()
+	return msg, nil
 }

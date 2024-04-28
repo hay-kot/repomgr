@@ -3,13 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"time"
+	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -18,10 +17,8 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/hay-kot/repomgr/app/commands"
-	"github.com/hay-kot/repomgr/app/commands/ui"
 	"github.com/hay-kot/repomgr/app/console"
 	"github.com/hay-kot/repomgr/app/core/config"
-	"github.com/hay-kot/repomgr/app/core/services"
 )
 
 var (
@@ -90,26 +87,24 @@ func main() {
 			if logFile == "" {
 				writer = io.Discard
 			} else {
-				f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 				if err != nil {
 					return err
 				}
 				writer = f
 			}
 
-			// TODO: remove color from logs in prod, but keep it in dev
-			// for nice tail output
-			log.Logger = log.Output(zerolog.ConsoleWriter{
-				Out:     writer,
-				NoColor: !cfg.Logs.Color,
-			})
-
-			level, err := zerolog.ParseLevel(ctx.String("log-level"))
-			if err != nil {
-				return err
+			if cfg.Logs.Format == "text" {
+				log.Logger = log.Output(zerolog.ConsoleWriter{
+					Out:     writer,
+					NoColor: !cfg.Logs.Color,
+				})
+			} else if cfg.Logs.Format == "json" {
+				log.Logger = log.Output(writer)
 			}
 
-			zerolog.SetGlobalLevel(level)
+			zerolog.SetGlobalLevel(cfg.Logs.Level)
+			log.Debug().Str("config", absolutePath).Msg("loaded config")
 			return nil
 		},
 		Commands: []*cli.Command{
@@ -117,18 +112,16 @@ func main() {
 				Name:  "cache",
 				Usage: "cache controls for the database",
 				Action: func(ctx *cli.Context) error {
-					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					db, err := sql.Open("sqlite", cfg.Database.DNS())
 					if err != nil {
 						return err
 					}
+					defer db.Close()
 
-					defer sqldb.Close()
-					service, err := services.NewRepositoryService(sqldb)
+					ctrl, err := commands.NewController(cfg, db)
 					if err != nil {
 						return err
 					}
-
-					ctrl := commands.NewController(cfg, service)
 					return ctrl.Cache(appctx)
 				},
 			},
@@ -136,25 +129,27 @@ func main() {
 				Name:  "search",
 				Usage: "search for repositories",
 				Action: func(ctx *cli.Context) error {
-					sqldb, err := sql.Open("sqlite", cfg.Database.DNS())
+					db, err := sql.Open("sqlite", cfg.Database.DNS())
+					if err != nil {
+						return err
+					}
+					defer db.Close()
+
+					ctrl, err := commands.NewController(cfg, db)
 					if err != nil {
 						return err
 					}
 
-					defer sqldb.Close()
-					service, err := services.NewRepositoryService(sqldb)
+					msg, err := ctrl.Search(appctx)
 					if err != nil {
 						return err
 					}
 
-					ctrl := commands.NewController(cfg, service)
-					r, err := ctrl.Search(appctx)
-					if err != nil {
-						return err
+					if msg != "" {
+						fmt.Println(msg)
 					}
 
-          fmt.Println(r.DisplayName())
-          return nil
+					return nil
 				},
 			},
 			{
@@ -172,27 +167,6 @@ func main() {
 
 							fmt.Println(cfgstr)
 							return nil
-						},
-					},
-					{
-						Name:  "spinner",
-						Usage: "test spinner",
-						Action: func(ctx *cli.Context) error {
-							return ui.NewSpinnerFunc("loading...", func(ch chan<- string) error {
-								for i := 0; i < 10; i++ {
-									ch <- fmt.Sprintf("loading... %d", i)
-									time.Sleep(300 * time.Millisecond)
-								}
-
-								return nil
-							})
-						},
-					},
-					{
-						Name:  "error",
-						Usage: "test/dump console outputs",
-						Action: func(ctx *cli.Context) error {
-							return errors.New("failed to run config file")
 						},
 					},
 					{
@@ -214,7 +188,17 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		cons.UnknownError("An unexpected error occurred", err)
+		errstr := err.Error()
+
+		switch {
+		// ignore these errors, urfave/cli does not provide any way to hanldle them
+		// without direct string comparison :(
+		case strings.HasPrefix(errstr, "flag provided but not defined"):
+		default:
+			log.Error().Err(err).Msg("error occurred")
+			cons.UnknownError("An unexpected error occurred", err)
+		}
+
 		os.Exit(1)
 	}
 }
