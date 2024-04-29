@@ -23,7 +23,8 @@ var _ ActionCommandBuilder = &ShellCommandBuilder{}
 // commands. It returns a new ActionCommand that will execute the given command
 // with the given arguments in a shell using the exec package.
 type ShellCommandBuilder struct {
-	Shell string
+	Shell        string
+	ShellCmdFlag string
 }
 
 // Build implements ActionCommandBuilder.
@@ -34,6 +35,6 @@ func (s *ShellCommandBuilder) Build(cmd string, args ...string) ActionCommand {
 		Strs("args", args).
 		Msg("executing command")
 
-	c := exec.Command(s.Shell, "-c", cmd+" "+strings.Join(args, " "))
+	c := exec.Command(s.Shell, s.ShellCmdFlag, cmd+" "+strings.Join(args, " "))
 	return execWrapper{Cmd: c}
 }

@@ -29,7 +29,8 @@ func NewController(conf *config.Config, sqldb *sql.DB) (*Controller, error) {
 	}
 
 	commander := commander.New(conf.KeyBindings, rfs, &commander.ShellCommandBuilder{
-		Shell: conf.Shell,
+		Shell:        conf.Shell,
+		ShellCmdFlag: conf.ShellCmdFlag,
 	})
 
 	return &Controller{

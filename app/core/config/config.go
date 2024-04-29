@@ -18,6 +18,7 @@ import (
 type Config struct {
 	Concurrency      int                     `toml:"concurrency"`
 	Shell            string                  `toml:"shell"`
+	ShellCmdFlag     string                  `toml:"shell_flag"`
 	DotEnvs          []string                `toml:"dotenvs"`
 	KeyBindings      commander.KeyBindings   `toml:"key_bindings"`
 	Sources          []Source                `toml:"sources"`
@@ -28,7 +29,9 @@ type Config struct {
 
 func Default() *Config {
 	return &Config{
-		Concurrency: runtime.NumCPU(),
+		Concurrency:  runtime.NumCPU(),
+		Shell:        "bash",
+		ShellCmdFlag: "-c",
 		Logs: Logs{
 			Level:  zerolog.InfoLevel,
 			File:   "",
